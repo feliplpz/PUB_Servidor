@@ -1,0 +1,1 @@
+PyBluez @ git+https://github.com/pybluez/pybluez.git@82cbba8a1ebd4c1e3442dfafd8581d58c50fa39e
