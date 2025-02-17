@@ -1,178 +1,210 @@
+from datetime import datetime
 import bluetooth
 import json
 import os
-import psutil
 import logging
 import asyncio
 import time
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-import random
-import string
+import secrets
+from collections import deque
+from threading import Lock
+from flask import Flask, jsonify, render_template, Response
+import matplotlib
+matplotlib.use('Agg')  # Backend para evitar problemas em threads
+import matplotlib.pyplot as plt
+from io import BytesIO
 
-# Configuração básica de log
+# Configuração de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-MAX_MESSAGE_SIZE = 1024  # 1 KiB
-MAX_WORKERS = 20  # Ajuste para maior número de conexões simultâneas
-CONNECTION_TIMEOUT = 60  # Timeout de 60 segundos para inatividade no servidor
-RECEIVE_TIMEOUT = 10  # Timeout de 10 segundos para operações de leitura de socket
+# Constantes
+MAX_MESSAGE_SIZE = 1024
+MAX_DATA_POINTS = 100  # Ajustável conforme necessário
 
-# Caminho para o arquivo de log TXT
-TXT_LOG_FILE = 'log_messages.txt'
+# Estruturas de dados thread-safe
+data_lock = Lock()
+data_t = deque(maxlen=MAX_DATA_POINTS)
+data_x = deque(maxlen=MAX_DATA_POINTS)
+data_y = deque(maxlen=MAX_DATA_POINTS)
+data_z = deque(maxlen=MAX_DATA_POINTS)
 
-# Função para gerar um ID aleatório para o dispositivo
+# Inicializa o tempo inicial
+start_time = time.time()
+
+# Inicializa o Flask
+app = Flask(__name__)
+
+# Gera um ID aleatório para o dispositivo
 def generate_device_id():
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    return secrets.token_hex(4).upper()
 
-# Função para identificar o nome do dispositivo Bluetooth
-def get_device_name(socket):
-    try:
-        return bluetooth.lookup_name(socket.getpeername()[0])  # Obtém o nome do dispositivo pelo IP
-    except bluetooth.btcommon.BluetoothError:
-        return "Unknown"
-
-# Função de log com escrita em arquivo TXT
+# Função para logar mensagens
 def log_message(message):
     logging.info(message)
+    with open('server.log', 'a') as f:
+        f.write(f"{datetime.now().isoformat()} - {message}\n")
 
-    # Registra também no arquivo de texto
+# Função para salvar os dados recebidos no CSV e atualizar os dados do gráfico
+def save_data(device_id, device_name, message):
     try:
-        with open(TXT_LOG_FILE, mode='a', encoding='utf-8') as file:
-            file.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
+        accel_x = message.get('x', float('nan'))
+        accel_y = message.get('y', float('nan'))
+        accel_z = message.get('z', float('nan'))
+
+        if not all(isinstance(v, (int, float)) for v in (accel_x, accel_y, accel_z)):
+            return
+
+        timestamp = datetime.now().isoformat()
+        is_new_file = not os.path.exists('data.csv')
+
+        with open('data.csv', 'a') as f:
+            if is_new_file:
+                f.write("timestamp,device_id,device_name,accel_x,accel_y,accel_z\n")
+            f.write(f"{timestamp},{device_id},{device_name},{accel_x},{accel_y},{accel_z}\n")
+
+        # Atualiza os dados para o gráfico
+        with data_lock:
+            current_time = time.time() - start_time
+            data_t.append(current_time)
+            data_x.append(accel_x)
+            data_y.append(accel_y)
+            data_z.append(accel_z)
+
     except Exception as e:
-        logging.error(f"Erro ao escrever no arquivo TXT: {e}")
+        log_message(f"Erro ao salvar dados: {e}")
 
-# Função de monitoramento de uso de memória
-def monitor_and_cleanup():
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    if mem_info.rss / 1024 / 1024 > 100:  # 100 MB
-        log_message("Uso excessivo de memória detectado. Limpando recursos.")
+# Rota principal - Renderiza o template HTML com o gráfico dinâmico
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-# Função para receber dados completos com timeout
+# Rota para fornecer os dados em formato JSON (para Plotly)
+@app.route('/get_data')
+def get_data():
+    with data_lock:
+        return jsonify({
+            'time': list(data_t),
+            'x': list(data_x),
+            'y': list(data_y),
+            'z': list(data_z)
+        })
+
+# Função para gerar o gráfico
+@app.route('/plot.png')
+def plot():
+    with data_lock:
+        try:
+            fig, axes = plt.subplots(3, 1, figsize=(10, 8))
+
+            for ax, data, label, color in zip(axes, [data_x, data_y, data_z], 
+                                              ['X', 'Y', 'Z'], ['blue', 'orange', 'green']):
+                ax.plot(data_t, data, color=color, label=f"Aceleração {label}")
+                ax.legend()
+                ax.set_xlabel('Tempo (s)')
+                ax.set_ylabel('Aceleração (m/s²)')
+                ax.grid(True)
+
+            plt.tight_layout()
+            img = BytesIO()
+            plt.savefig(img, format='png')
+            plt.close(fig)
+            img.seek(0)
+            return Response(img.getvalue(), mimetype='image/png')
+
+        except Exception as e:
+            log_message(f"Erro ao gerar gráfico: {e}")
+            return Response(status=500)
+
+# Função para receber todos os dados do socket
 async def recv_all(socket, length):
-    data = b''
-    try:
-        while len(data) < length:
-            more = await asyncio.wait_for(asyncio.to_thread(socket.recv, length - len(data)), timeout=RECEIVE_TIMEOUT)
-            if not more:
-                return None
-            data += more
-        return data
-    except asyncio.TimeoutError:
-        log_message("Timeout excedido durante a leitura dos dados.")
-        return None
-    except bluetooth.btcommon.BluetoothError as e:
-        log_message(f"Erro ao receber dados: {e}")
-        return None
+    received_data = b''
+    while len(received_data) < length:
+        chunk = await asyncio.to_thread(socket.recv, length - len(received_data))
+        if not chunk:
+            break
+        received_data += chunk
+    return received_data
 
-# Função para lidar com a conexão
-async def handle_connection(socket, info, device_id):
+# Função para lidar com os clientes Bluetooth
+async def handle_client(socket, device_id):
     try:
-        device_name = get_device_name(socket)
-        log_message(f"Conexão aceita de {device_name} ({device_id})")
-
-        last_activity_time = time.time()
+        device_name = bluetooth.lookup_name(socket.getpeername()[0]) or "Unknown"
+        log_message(f"Conectado: {device_name}")
 
         while True:
-            socket.settimeout(10)  # Timeout de 10 segundos para o socket
-
             try:
                 length_bytes = await recv_all(socket, 4)
-                if not length_bytes:
-                    log_message("Erro: Não conseguiu receber 4 bytes para o comprimento da mensagem.")
+                if not length_bytes or len(length_bytes) != 4:
+                    log_message("Erro: Tamanho da mensagem inválido.")
                     break
 
                 length = int.from_bytes(length_bytes, byteorder='big')
-                if length <= 0:
-                    log_message("Erro: Comprimento inválido recebido.")
-                    break
-
-                if length > MAX_MESSAGE_SIZE:
-                    log_message(f"Erro: Mensagem muito grande ({length} bytes). Ignorando mensagem.")
-                    socket.recv(length)  # Descarta os dados
+                if length <= 0 or length > MAX_MESSAGE_SIZE:
+                    log_message(f"Erro: Tamanho da mensagem fora do limite: {length} bytes")
                     continue
 
                 message_bytes = await recv_all(socket, length)
-                if not message_bytes:
-                    log_message("Erro: Não conseguiu receber a mensagem completa.")
+                if not message_bytes or len(message_bytes) != length:
+                    log_message("Erro: Mensagem incompleta ou corrompida.")
                     break
 
-                message_json = str(message_bytes, 'utf-8')
-                message = json.loads(message_json)
-                log_message(f"Mensagem recebida: {message}")
+                try:
+                    message = json.loads(message_bytes.decode('utf-8'))
+                    if not isinstance(message, dict):
+                        raise ValueError("Mensagem não é um JSON válido")
+                except (json.JSONDecodeError, ValueError) as e:
+                    log_message(f"Erro ao decodificar mensagem: {e}")
+                    continue
 
-                # Monitora o uso de memória
-                monitor_and_cleanup()
+                log_message(f"Dados recebidos de {device_name}: {message}")
+                save_data(device_id, device_name, message)
 
-                # Atualiza o tempo da última atividade
-                last_activity_time = time.time()
-
-            except bluetooth.btcommon.BluetoothError as bt_err:
-                log_message(f"Erro Bluetooth: {bt_err}")
-                break
-            except asyncio.TimeoutError:
-                log_message(f"Conexão com {info} ({device_name}) excedeu o tempo limite.")
+            except (asyncio.TimeoutError, bluetooth.btcommon.BluetoothError) as e:
+                log_message(f"Erro na conexão: {e}")
                 break
             except Exception as e:
                 log_message(f"Erro inesperado: {e}")
                 break
 
-        socket.close()
-        log_message(f"Conexão com {info} ({device_name}) encerrada.")
-
+    except Exception as e:
+        log_message(f"Erro crítico: {e}")
     finally:
-        socket.close()
+        try:
+            socket.close()
+            log_message(f"Conexão com {device_name} encerrada.")
+        except:
+            pass
 
-# Função para iniciar o servidor
-async def start_server():
+# Servidor Bluetooth
+async def bluetooth_server():
     server_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     server_socket.bind(('', bluetooth.PORT_ANY))
     server_socket.listen(1)
+    log_message(f"Servidor Bluetooth ativo na porta {server_socket.getsockname()[1]}")
 
-    name = server_socket.getsockname()[1]
-    log_message(f"Servidor iniciado no canal {name}")
-    log_message("Aguardando conexões...")
-
-    last_connection_time = time.time()
-    last_activity_time = time.time()
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        while True:
-            try:
-                socket, info = await asyncio.to_thread(server_socket.accept)
-                device_id = generate_device_id()  # Gerando um ID único para o dispositivo
-                log_message(f"Nova conexão de {info}")
-
-                # Inicia uma nova tarefa para lidar com a conexão
-                asyncio.create_task(handle_connection(socket, info, device_id))
-
-                # Atualiza o tempo da última conexão
-                last_connection_time = time.time()
-                last_activity_time = time.time()
-
-            except Exception as e:
-                log_message(f"Erro ao aceitar conexão: {e}")
-
-            # Verifica se o servidor deve ser fechado devido a inatividade
-            if time.time() - last_connection_time > CONNECTION_TIMEOUT:
-                log_message(f"Sem novas conexões por {CONNECTION_TIMEOUT} segundos. Fechando o servidor.")
-                break
-
-            # Verifica se o servidor deve ser fechado devido a inatividade nas conexões ativas
-            if time.time() - last_activity_time > CONNECTION_TIMEOUT:
-                log_message(f"Sem atividade nas conexões por {CONNECTION_TIMEOUT} segundos. Fechando o servidor.")
-                break
-
-# Função principal
-async def main():
     try:
-        await start_server()
-    except KeyboardInterrupt:
-        log_message("Servidor interrompido.")
+        while True:
+            client_sock, _ = await asyncio.to_thread(server_socket.accept)
+            device_id = generate_device_id()
+            asyncio.create_task(handle_client(client_sock, device_id))
+    except asyncio.CancelledError:
+        pass
     finally:
-        log_message("Servidor encerrado.")
+        server_socket.close()
+
+# Inicia o Flask
+def run_flask():
+    app.run(host='0.0.0.0', port=5000, use_reloader=False, threaded=True)
+
+# Função principal para rodar Bluetooth e Flask simultaneamente
+async def main():
+    await asyncio.gather(
+        bluetooth_server(),
+        asyncio.to_thread(run_flask)
+    )
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        log_message("Servidor encerrado")

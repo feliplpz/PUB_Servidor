@@ -1,7 +1,10 @@
 
 *.log
 *.tmp
+*.csv
+*.txt
 node_modules/
 dist/
 .vscode/
 *~
+path/
