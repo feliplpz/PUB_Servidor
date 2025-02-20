@@ -12,7 +12,7 @@ from flask import Flask, jsonify, render_template, Response
 import matplotlib
 import matplotlib.pyplot as plt
 from io import BytesIO
-from app_config import MAX_DATA_POINTS, MAX_MESSAGE_SIZE, SERVER_LOG_FILE_PATH
+from app_config import MAX_DATA_POINTS, MAX_MESSAGE_SIZE, SERVER_LOG_FILE_PATH, DATA_FILE_PATH
 
 # Backend para evitar problemas em threads
 matplotlib.use("Agg")
@@ -58,10 +58,11 @@ def save_data(device_id, device_name, message):
             return
 
         timestamp = datetime.now().isoformat()
-        is_new_file = not os.path.exists("data.csv")
 
-        with open("data.csv", "a") as f:
-            if is_new_file:
+        is_new_file =  not os.path.exists(DATA_FILE_PATH)       
+
+        with open(DATA_FILE_PATH, "a+") as f:
+            if  is_new_file:
                 f.write("timestamp,device_id,device_name,accel_x,accel_y,accel_z\n")
             f.write(
                 f"{timestamp},{device_id},{device_name},{accel_x},{accel_y},{accel_z}\n"
