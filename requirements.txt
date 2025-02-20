@@ -1,5 +1,5 @@
 PyBluez @ git+https://github.com/pybluez/pybluez.git
-andas==2.2.3
+pandas==2.2.3
 Flask==3.1.0
 matplotlib==3.10.0
 scipy==1.15.2
