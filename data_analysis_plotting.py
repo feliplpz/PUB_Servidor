@@ -87,7 +87,7 @@ def plot_acceleration(data, stats):
 
 
 ## Função para realizar a analise de Fourier
-def fourier_analysis(data, fs=50):
+def fourier_analysis(data, fs=5):
     fig_fft = go.Figure()
 
     for axis in ["x", "y", "z"]:
