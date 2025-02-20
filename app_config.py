@@ -1,4 +1,4 @@
 MAX_MESSAGE_SIZE = 1024
 MAX_DATA_POINTS = 100
 SERVER_LOG_FILE_PATH = "server.log"
-DATA_FILE_PATH = "jonas.csv"
+DATA_FILE_PATH = "data.csv"
