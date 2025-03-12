@@ -1,7 +1,16 @@
-
+bin/
+lib/
+lib64/
+share/
+pyvenv.cfg
+lib64
 *.log
 *.tmp
+*.csv
+*.txt
 node_modules/
 dist/
 .vscode/
 *~
+path/
+*.pyc
