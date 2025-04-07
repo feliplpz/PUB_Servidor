@@ -12,7 +12,9 @@ from flask import Flask, jsonify, render_template, Response
 import matplotlib
 import matplotlib.pyplot as plt
 from io import BytesIO
-from app_config import MAX_DATA_POINTS, MAX_MESSAGE_SIZE, SERVER_LOG_FILE_PATH, DATA_FILE_PATH
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Backend para evitar problemas em threads
 matplotlib.use("Agg")
@@ -22,10 +24,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 # Estruturas de dados thread-safe
 data_lock = Lock()
-data_t = deque(maxlen=MAX_DATA_POINTS)
-data_x = deque(maxlen=MAX_DATA_POINTS)
-data_y = deque(maxlen=MAX_DATA_POINTS)
-data_z = deque(maxlen=MAX_DATA_POINTS)
+data_t = deque(maxlen=int(os.getenv("MAX_DATA_POINTS")))
+data_x = deque(maxlen=int(os.getenv("MAX_DATA_POINTS")))
+data_y = deque(maxlen=int(os.getenv("MAX_DATA_POINTS")))
+data_z = deque(maxlen=int(os.getenv("MAX_DATA_POINTS")))
 
 # Inicializa o tempo inicial
 start_time = time.time()
@@ -43,7 +45,7 @@ def generate_device_id():
 def log_message(message):
     logging.info(message)
 
-    with open(f"{SERVER_LOG_FILE_PATH}", "a+") as f:
+    with open(f"{os.getenv("SERVER_LOG_FILE_PATH")}", "a+") as f:
         f.write(f"{datetime.now().isoformat()} - {message}\n")
 
 
@@ -59,10 +61,10 @@ def save_data(device_id, device_name, message):
 
         timestamp = datetime.now().isoformat()
 
-        is_new_file =  not os.path.exists(DATA_FILE_PATH)       
+        is_new_file = not os.path.exists(os.getenv("DATA_FILE_PATH"))
 
-        with open(DATA_FILE_PATH, "a+") as f:
-            if  is_new_file:
+        with open(os.getenv("DATA_FILE_PATH"), "a+") as f:
+            if is_new_file:
                 f.write("timestamp,device_id,device_name,accel_x,accel_y,accel_z\n")
             f.write(
                 f"{timestamp},{device_id},{device_name},{accel_x},{accel_y},{accel_z}\n"
@@ -156,7 +158,7 @@ async def handle_client(socket, device_id):
                     break
 
                 length = int.from_bytes(length_bytes, byteorder="big")
-                if length <= 0 or length > MAX_MESSAGE_SIZE:
+                if length <= 0 or length > int(os.getenv("MAX_MESSAGE_SIZE")):
                     log_message(
                         f"Erro: Tamanho da mensagem fora do limite: {length} bytes"
                     )
