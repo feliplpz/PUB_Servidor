@@ -1,0 +1,222 @@
+<!-- templates/device.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispositivo: {{ device.name }}</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        #graph {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 600px;
+        }
+
+        .button-group {
+            margin: 20px 0;
+        }
+
+        .button {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #555;
+        }
+
+        .button:disabled {
+            background-color: #777;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            color: #aaa;
+            margin-top: 20px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Voltar para lista de dispositivos</a>
+        
+        <div class="title">{{ device.name }}</div>
+        <div class="subtitle">ID: {{ device_id }}</div>
+        
+        {% if 'accelerometer' in device.sensors %}
+            <div class="button-group">
+                <button class="button" id="toggle-x">Toggle X</button>
+                <button class="button" id="toggle-y">Toggle Y</button>
+                <button class="button" id="toggle-z">Toggle Z</button>
+            </div>
+
+            <div id="graph"></div>
+            <div id="loading" class="loading">Carregando dados...</div>
+        {% else %}
+            <p>Este dispositivo não possui um sensor de acelerômetro.</p>
+        {% endif %}
+    </div>
+
+    {% if 'accelerometer' in device.sensors %}
+    <script>
+        let graphData = {
+            time: [],
+            x: [],
+            y: [],
+            z: []
+        };
+
+        const layout = {
+            title: 'Aceleração nos Eixos X, Y e Z',
+            xaxis: {
+                title: 'Tempo (s)',
+                showgrid: true,
+                gridcolor: '#444'
+            },
+            yaxis: {
+                title: 'Aceleração (m/s²)',
+                showgrid: true,
+                gridcolor: '#444'
+            },
+            showlegend: true,
+            plot_bgcolor: "#121212",
+            paper_bgcolor: "#121212",
+            font: {
+                color: 'white'
+            },
+            legend: {
+                orientation: 'h',
+                x: 0.5,
+                xanchor: 'center',
+                y: -0.1
+            }
+        };
+
+        const plotlyData = [
+            {
+                x: graphData.time,
+                y: graphData.x,
+                mode: 'lines',
+                name: 'Aceleração X',
+                line: { color: 'blue' },
+                visible: true
+            },
+            {
+                x: graphData.time,
+                y: graphData.y,
+                mode: 'lines',
+                name: 'Aceleração Y',
+                line: { color: 'orange' },
+                visible: true
+            },
+            {
+                x: graphData.time,
+                y: graphData.z,
+                mode: 'lines',
+                name: 'Aceleração Z',
+                line: { color: 'green' },
+                visible: true
+            }
+        ];
+
+        // Função para atualizar o gráfico
+        function updateGraph() {
+            Plotly.react('graph', plotlyData, layout);
+        }
+
+        // Função para alternar visibilidade de cada gráfico
+        function toggleGraph(axis) {
+            const index = { x: 0, y: 1, z: 2 }[axis];
+            plotlyData[index].visible = !plotlyData[index].visible;
+            updateGraph();
+        }
+
+        // Botões para alternar gráficos
+        document.getElementById('toggle-x').addEventListener('click', () => toggleGraph('x'));
+        document.getElementById('toggle-y').addEventListener('click', () => toggleGraph('y'));
+        document.getElementById('toggle-z').addEventListener('click', () => toggleGraph('z'));
+
+        // Função para buscar dados do servidor
+        async function fetchData() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block'; // Mostra o indicador de carregamento
+
+            try {
+                const response = await fetch('/api/device/{{ device_id }}/data/accelerometer');
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.statusText}`);
+                }
+                const data = await response.json();
+                graphData = data;
+
+                // Atualiza os dados do gráfico
+                plotlyData[0].x = graphData.time;
+                plotlyData[0].y = graphData.x;
+                plotlyData[1].x = graphData.time;
+                plotlyData[1].y = graphData.y;
+                plotlyData[2].x = graphData.time;
+                plotlyData[2].y = graphData.z;
+
+                updateGraph();
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+            } finally {
+                loading.style.display = 'none'; // Oculta o indicador de carregamento
+            }
+        }
+
+        // Atualiza o gráfico periodicamente
+        setInterval(fetchData, 500);
+
+        // Inicializa o gráfico
+        Plotly.newPlot('graph', plotlyData, layout);
+    </script>
+    {% endif %}
+</body>
+</html>

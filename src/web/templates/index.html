@@ -1,0 +1,109 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servidor de Sensores Bluetooth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            margin: 30px 0 15px;
+            color: #aaa;
+        }
+
+        .device-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .device-item {
+            background-color: #1e1e1e;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .device-name {
+            font-weight: bold;
+        }
+
+        .device-id {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .device-time {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .device-link {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .device-link:hover {
+            background-color: #555;
+        }
+
+        .no-devices {
+            text-align: center;
+            color: #888;
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">Servidor de Sensores Bluetooth</div>
+        
+        <div class="subtitle">Dispositivos Conectados</div>
+        
+        {% if devices %}
+            <ul class="device-list">
+                {% for device_id, device in devices.items() %}
+                <li class="device-item">
+                    <div>
+                        <div class="device-name">{{ device.name }}</div>
+                        <div class="device-id">ID: {{ device_id }}</div>
+                        <div class="device-time">Conectado em: {{ device.connected_at }}</div>
+                    </div>
+                    <a href="/device/{{ device_id }}" class="device-link">Ver detalhes</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="no-devices">Nenhum dispositivo conectado.</div>
+        {% endif %}
+    </div>
+</body>
+</html>
