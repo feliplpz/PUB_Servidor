@@ -44,7 +44,7 @@ class Sensor(ABC):
         pass
 
     @abstractmethod
-    def save_to_file(self, data, device_name):
+    def save_to_file(self, data, device_name, device_id):
         """
         Salva os dados em um arquivo
 

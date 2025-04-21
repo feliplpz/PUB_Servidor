@@ -12,7 +12,7 @@ class DeviceManager:
     """Gerencia dispositivos conectados ao servidor"""
 
     # Dicionário para armazenar informações sobre dispositivos conectados
-    devices = {}
+    _devices = {}
 
     @staticmethod
     def generate_device_id():
@@ -33,8 +33,8 @@ class DeviceManager:
             device_id (str): ID único do dispositivo
             device_name (str): Nome do dispositivo Bluetooth
         """
-        if device_id not in cls.devices:
-            cls.devices[device_id] = {
+        if device_id not in cls._devices:
+            cls._devices[device_id] = {
                 "name": device_name,
                 "connected_at": datetime.now().isoformat(),
                 "sensors": {},
@@ -49,7 +49,7 @@ class DeviceManager:
         Returns:
             dict: Dicionário com informações de todos os dispositivos
         """
-        return cls.devices
+        return cls._devices
 
 
 class BluetoothConnection:
@@ -97,7 +97,7 @@ class BluetoothConnection:
             )
 
             # Registra o sensor no dispositivo
-            DeviceManager.devices[device_id]["sensors"]["accelerometer"] = accel_sensor
+            DeviceManager._devices[device_id]["sensors"]["accelerometer"] = accel_sensor
 
             while True:
                 try:
@@ -134,7 +134,7 @@ class BluetoothConnection:
 
                     # Processa e salva os dados do acelerômetro
                     if accel_sensor.process_data(message):
-                        accel_sensor.save_to_file(message, device_name)
+                        accel_sensor.save_to_file(message, device_name, device_id)
 
                 except (asyncio.TimeoutError, bluetooth.btcommon.BluetoothError) as e:
                     Logger.log_message(f"Erro na conexão: {e}")

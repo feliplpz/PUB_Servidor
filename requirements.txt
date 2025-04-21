@@ -5,3 +5,5 @@ matplotlib==3.10.0
 scipy==1.15.2
 plotly==6.0.0
 python-dotenv==1.1.0
+Flask-SocketIO==5.5.1
+eventlet==0.39.1

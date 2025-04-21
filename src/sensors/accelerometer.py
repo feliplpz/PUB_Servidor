@@ -4,6 +4,11 @@ import time
 from collections import deque
 from src.utils.logging import Logger
 from src.sensors.base_sensor import Sensor
+from src.connection.event_bus import EventBus
+
+ACCELEROMETER = "accelerometer"
+DIVIDER = "_"
+EXTENSION = ".csv"
 
 
 class Accelerometer(Sensor):
@@ -41,6 +46,16 @@ class Accelerometer(Sensor):
                 self.data_y.append(accel_y)
                 self.data_z.append(accel_z)
 
+            # Publica os dados para quem estiver interessado
+            EventBus.publish(
+                "sensor_update",
+                {
+                    "device_id": self.device_id,
+                    "sensor_type": "accelerometer",
+                    "data": self.get_data(),
+                },
+            )
+
             return True
         except Exception as e:
             Logger.log_message(f"Erro ao processar dados do acelerômetro: {e}")
@@ -61,13 +76,14 @@ class Accelerometer(Sensor):
                 "z": list(self.data_z),
             }
 
-    def save_to_file(self, data, device_name):
+    def save_to_file(self, data, device_name, device_id):
         """
         Salva os dados do acelerômetro em um arquivo CSV
 
         Args:
             data (dict): Dados a serem salvos
             device_name (str): Nome do dispositivo
+            device_id (str): ID do dispositivo
         """
         try:
             accel_x = data.get("x", float("nan"))
@@ -75,8 +91,15 @@ class Accelerometer(Sensor):
             accel_z = data.get("z", float("nan"))
 
             timestamp = datetime.now().isoformat()
-            file_path = os.getenv("DATA_FILE_PATH", "sensor_data.csv")
-
+            file_path = (
+                os.getenv("DATA_FILE_PATH", "")
+                + ACCELEROMETER
+                + DIVIDER
+                + device_name
+                + DIVIDER
+                + device_id
+                + EXTENSION
+            )
             is_new_file = not os.path.exists(file_path)
 
             with open(file_path, "a+") as f:

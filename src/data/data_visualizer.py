@@ -1,6 +1,6 @@
 from io import BytesIO
 from src.utils.logging import Logger
-from src.bluetooth.bluetooth_server import DeviceManager
+from src.connection.bluetooth_server import DeviceManager
 
 
 class DataVisualizer:

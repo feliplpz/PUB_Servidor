@@ -1,4 +1,4 @@
-from src.bluetooth.bluetooth_server import DeviceManager
+from src.connection.bluetooth_server import DeviceManager
 from src.data.data_visualizer import DataVisualizer
 from flask import jsonify, render_template, Response, redirect, url_for
 

@@ -1,222 +1,391 @@
 <!-- templates/device.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dispositivo: {{ device.name }}</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #fff;
-            margin: 0;
-            padding: 20px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: #fff;
+        margin: 0;
+        padding: 20px;
+      }
 
-        .container {
-            text-align: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+      .container {
+        text-align: center;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
-        .title {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
+      .title {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
 
-        .subtitle {
-            font-size: 16px;
-            color: #aaa;
-            margin-bottom: 20px;
-        }
+      .subtitle {
+        font-size: 16px;
+        color: #aaa;
+        margin-bottom: 20px;
+      }
 
-        #graph {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-            height: 600px;
-        }
+      #graph {
+        width: 90%;
+        max-width: 1200px;
+        margin: 0 auto;
+        height: 600px;
+      }
 
-        .button-group {
-            margin: 20px 0;
-        }
+      .button-group {
+        margin: 20px 0;
+      }
 
-        .button {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            margin: 5px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
+      .button {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        margin: 5px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+      }
 
-        .button:hover {
-            background-color: #555;
-        }
+      .button:hover {
+        background-color: #555;
+      }
 
-        .button:disabled {
-            background-color: #777;
-            cursor: not-allowed;
-        }
+      .button:disabled {
+        background-color: #777;
+        cursor: not-allowed;
+      }
 
-        .loading {
-            display: none;
-            color: #aaa;
-            margin-top: 20px;
-        }
+      .loading {
+        display: none;
+        color: #aaa;
+        margin-top: 20px;
+      }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #aaa;
-            text-decoration: none;
-            font-size: 14px;
-        }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #aaa;
+        text-decoration: none;
+        font-size: 14px;
+      }
 
-        .back-link:hover {
-            color: #fff;
-        }
+      .back-link:hover {
+        color: #fff;
+      }
+
+      #debug-log {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #333;
+        border-radius: 5px;
+        text-align: left;
+        max-height: 200px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      .log-entry {
+        margin-bottom: 5px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+      }
+
+      .log-error {
+        color: #ff6b6b;
+      }
+
+      .log-success {
+        color: #59cb59;
+      }
+
+      .log-info {
+        color: #4dabf7;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <a href="/" class="back-link">← Voltar para lista de dispositivos</a>
-        
-        <div class="title">{{ device.name }}</div>
-        <div class="subtitle">ID: {{ device_id }}</div>
-        
-        {% if 'accelerometer' in device.sensors %}
-            <div class="button-group">
-                <button class="button" id="toggle-x">Toggle X</button>
-                <button class="button" id="toggle-y">Toggle Y</button>
-                <button class="button" id="toggle-z">Toggle Z</button>
-            </div>
+      <a href="/" class="back-link">← Voltar para lista de dispositivos</a>
 
-            <div id="graph"></div>
-            <div id="loading" class="loading">Carregando dados...</div>
-        {% else %}
-            <p>Este dispositivo não possui um sensor de acelerômetro.</p>
-        {% endif %}
+      <div class="title">{{ device.name }}</div>
+      <div class="subtitle">ID: {{ device_id }}</div>
+
+      {% if 'accelerometer' in device.sensors %}
+      <div class="button-group">
+        <button class="button" id="toggle-x">Toggle X</button>
+        <button class="button" id="toggle-y">Toggle Y</button>
+        <button class="button" id="toggle-z">Toggle Z</button>
+        <button class="button" id="test-graph">Testar Gráfico</button>
+      </div>
+
+      <div id="graph"></div>
+      <div id="loading" class="loading">Carregando dados...</div>
+
+      <!-- Área de logs para diagnóstico -->
+      <div id="debug-log">
+        <div class="log-entry log-info">
+          Inicializando aplicação... Aguardando conexão WebSocket.
+        </div>
+      </div>
+      {% else %}
+      <p>Este dispositivo não possui um sensor de acelerômetro.</p>
+      {% endif %}
     </div>
 
     {% if 'accelerometer' in device.sensors %}
     <script>
-        let graphData = {
-            time: [],
-            x: [],
-            y: [],
-            z: []
+      // Função para adicionar logs na área de debug
+      function addLog(message, type = "info") {
+        const logArea = document.getElementById("debug-log");
+        const logEntry = document.createElement("div");
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logArea.appendChild(logEntry);
+        logArea.scrollTop = logArea.scrollHeight; // Auto-scroll para o último log
+        console.log(`[${type}] ${message}`);
+      }
+
+      // Inicializa os dados do gráfico
+      let graphData = {
+        time: [],
+        x: [],
+        y: [],
+        z: [],
+      };
+
+      addLog("Variáveis do gráfico inicializadas");
+
+      // Configuração do layout do gráfico
+      const layout = {
+        title: "Aceleração nos Eixos X, Y e Z",
+        xaxis: {
+          title: "Tempo (s)",
+          showgrid: true,
+          gridcolor: "#444",
+        },
+        yaxis: {
+          title: "Aceleração (m/s²)",
+          showgrid: true,
+          gridcolor: "#444",
+        },
+        showlegend: true,
+        plot_bgcolor: "#121212",
+        paper_bgcolor: "#121212",
+        font: {
+          color: "white",
+        },
+        legend: {
+          orientation: "h",
+          x: 0.5,
+          xanchor: "center",
+          y: -0.1,
+        },
+      };
+
+      // Configuração das séries de dados para o gráfico
+      const plotlyData = [
+        {
+          x: graphData.time,
+          y: graphData.x,
+          mode: "lines",
+          name: "Aceleração X",
+          line: { color: "blue" },
+          visible: true,
+        },
+        {
+          x: graphData.time,
+          y: graphData.y,
+          mode: "lines",
+          name: "Aceleração Y",
+          line: { color: "orange" },
+          visible: true,
+        },
+        {
+          x: graphData.time,
+          y: graphData.z,
+          mode: "lines",
+          name: "Aceleração Z",
+          line: { color: "green" },
+          visible: true,
+        },
+      ];
+
+      addLog("Configuração do gráfico definida");
+
+      // Função para atualizar o gráfico
+      function updateGraph() {
+        try {
+          addLog("Atualizando gráfico com novos dados");
+          Plotly.react("graph", plotlyData, layout);
+          addLog("Gráfico atualizado com sucesso", "success");
+        } catch (error) {
+          addLog(`Erro ao atualizar o gráfico: ${error.message}`, "error");
+        }
+      }
+
+      // Função para testar o gráfico com dados simulados
+      function testGraph() {
+        addLog("Gerando dados de teste para o gráfico");
+
+        const now = Date.now() / 1000;
+        const testData = {
+          time: Array.from({ length: 50 }, (_, i) => now - 50 + i),
+          x: Array.from({ length: 50 }, () => Math.random() * 10 - 5),
+          y: Array.from({ length: 50 }, () => Math.random() * 10 - 5),
+          z: Array.from({ length: 50 }, () => Math.random() * 10 - 5),
         };
 
-        const layout = {
-            title: 'Aceleração nos Eixos X, Y e Z',
-            xaxis: {
-                title: 'Tempo (s)',
-                showgrid: true,
-                gridcolor: '#444'
-            },
-            yaxis: {
-                title: 'Aceleração (m/s²)',
-                showgrid: true,
-                gridcolor: '#444'
-            },
-            showlegend: true,
-            plot_bgcolor: "#121212",
-            paper_bgcolor: "#121212",
-            font: {
-                color: 'white'
-            },
-            legend: {
-                orientation: 'h',
-                x: 0.5,
-                xanchor: 'center',
-                y: -0.1
-            }
-        };
+        // Atualiza os dados do gráfico com os dados de teste
+        graphData = testData;
 
-        const plotlyData = [
-            {
-                x: graphData.time,
-                y: graphData.x,
-                mode: 'lines',
-                name: 'Aceleração X',
-                line: { color: 'blue' },
-                visible: true
-            },
-            {
-                x: graphData.time,
-                y: graphData.y,
-                mode: 'lines',
-                name: 'Aceleração Y',
-                line: { color: 'orange' },
-                visible: true
-            },
-            {
-                x: graphData.time,
-                y: graphData.z,
-                mode: 'lines',
-                name: 'Aceleração Z',
-                line: { color: 'green' },
-                visible: true
-            }
-        ];
+        // Atualiza as séries do gráfico
+        plotlyData[0].x = graphData.time;
+        plotlyData[0].y = graphData.x;
+        plotlyData[1].x = graphData.time;
+        plotlyData[1].y = graphData.y;
+        plotlyData[2].x = graphData.time;
+        plotlyData[2].y = graphData.z;
 
-        // Função para atualizar o gráfico
-        function updateGraph() {
-            Plotly.react('graph', plotlyData, layout);
+        addLog("Dados de teste gerados. Atualizando gráfico.");
+        updateGraph();
+      }
+
+      // Função para alternar visibilidade de cada gráfico
+      function toggleGraph(axis) {
+        const index = { x: 0, y: 1, z: 2 }[axis];
+        plotlyData[index].visible = !plotlyData[index].visible;
+        addLog(
+          `Visibilidade do eixo ${axis.toUpperCase()} alterada para ${
+            plotlyData[index].visible ? "visível" : "oculto"
+          }`
+        );
+        updateGraph();
+      }
+
+      // Botões para alternar gráficos
+      document
+        .getElementById("toggle-x")
+        .addEventListener("click", () => toggleGraph("x"));
+      document
+        .getElementById("toggle-y")
+        .addEventListener("click", () => toggleGraph("y"));
+      document
+        .getElementById("toggle-z")
+        .addEventListener("click", () => toggleGraph("z"));
+      document
+        .getElementById("test-graph")
+        .addEventListener("click", testGraph);
+
+      addLog("Event listeners configurados");
+
+      // Tentativa de inicializar o gráfico
+      try {
+        Plotly.newPlot("graph", plotlyData, layout);
+        addLog("Gráfico inicializado com sucesso", "success");
+      } catch (error) {
+        addLog(`Erro ao inicializar o gráfico: ${error.message}`, "error");
+      }
+
+      // Inicializa a conexão WebSocket
+      addLog("Iniciando conexão com o Socket.IO");
+      const socket = io("/sensor");
+
+      // Monitora eventos de conexão
+      socket.on("connect", function () {
+        addLog("Conectado ao servidor WebSocket com sucesso!", "success");
+      });
+
+      socket.on("connect_error", function (error) {
+        addLog(`Erro na conexão WebSocket: ${error}`, "error");
+      });
+
+      socket.on("disconnect", function (reason) {
+        addLog(
+          `Desconectado do servidor WebSocket. Motivo: ${reason}`,
+          "error"
+        );
+      });
+
+      socket.on("reconnect", function (attemptNumber) {
+        addLog(
+          `Reconectado ao servidor WebSocket após ${attemptNumber} tentativas`,
+          "success"
+        );
+      });
+
+      // Escuta eventos de atualização do sensor específico deste dispositivo
+      const specificEventName = "sensor_update_{{ device_id }}_accelerometer";
+      addLog(`Aguardando eventos: ${specificEventName}`);
+
+      socket.on(specificEventName, function (data) {
+        addLog(`Dados recebidos do evento ${specificEventName}`);
+
+        // Verifica se os dados estão no formato esperado
+        if (
+          data &&
+          data.time &&
+          Array.isArray(data.time) &&
+          data.x &&
+          Array.isArray(data.x) &&
+          data.y &&
+          Array.isArray(data.y) &&
+          data.z &&
+          Array.isArray(data.z)
+        ) {
+          addLog(`Dados válidos recebidos: ${data.time.length} pontos`);
+
+          // Atualiza os dados do gráfico
+          graphData = data;
+
+          // Atualiza as séries do gráfico
+          plotlyData[0].x = graphData.time;
+          plotlyData[0].y = graphData.x;
+          plotlyData[1].x = graphData.time;
+          plotlyData[1].y = graphData.y;
+          plotlyData[2].x = graphData.time;
+          plotlyData[2].y = graphData.z;
+
+          updateGraph();
+        } else {
+          addLog(
+            `Formato de dados inválido recebido: ${JSON.stringify(
+              data
+            ).substring(0, 100)}...`,
+            "error"
+          );
         }
+      });
 
-        // Função para alternar visibilidade de cada gráfico
-        function toggleGraph(axis) {
-            const index = { x: 0, y: 1, z: 2 }[axis];
-            plotlyData[index].visible = !plotlyData[index].visible;
-            updateGraph();
-        }
+      // Escutando um evento genérico para testar se há outros eventos sendo emitidos
+      socket.on("any_update", function (data) {
+        addLog(
+          `Evento genérico 'any_update' recebido: ${JSON.stringify(
+            data
+          ).substring(0, 100)}...`,
+          "info"
+        );
+      });
 
-        // Botões para alternar gráficos
-        document.getElementById('toggle-x').addEventListener('click', () => toggleGraph('x'));
-        document.getElementById('toggle-y').addEventListener('click', () => toggleGraph('y'));
-        document.getElementById('toggle-z').addEventListener('click', () => toggleGraph('z'));
-
-        // Função para buscar dados do servidor
-        async function fetchData() {
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block'; // Mostra o indicador de carregamento
-
-            try {
-                const response = await fetch('/api/device/{{ device_id }}/data/accelerometer');
-                if (!response.ok) {
-                    throw new Error(`Erro na requisição: ${response.statusText}`);
-                }
-                const data = await response.json();
-                graphData = data;
-
-                // Atualiza os dados do gráfico
-                plotlyData[0].x = graphData.time;
-                plotlyData[0].y = graphData.x;
-                plotlyData[1].x = graphData.time;
-                plotlyData[1].y = graphData.y;
-                plotlyData[2].x = graphData.time;
-                plotlyData[2].y = graphData.z;
-
-                updateGraph();
-            } catch (error) {
-                console.error('Erro ao buscar dados:', error);
-            } finally {
-                loading.style.display = 'none'; // Oculta o indicador de carregamento
-            }
-        }
-
-        // Atualiza o gráfico periodicamente
-        setInterval(fetchData, 500);
-
-        // Inicializa o gráfico
-        Plotly.newPlot('graph', plotlyData, layout);
+      // Escuta todos os eventos para debug
+      socket.onAny((eventName, ...args) => {
+        addLog(
+          `Evento recebido: ${eventName} com dados: ${JSON.stringify(
+            args[0]
+          ).substring(0, 100)}...`,
+          "info"
+        );
+      });
     </script>
     {% endif %}
-</body>
+  </body>
 </html>
