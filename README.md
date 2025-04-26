@@ -37,7 +37,7 @@ Para visualizar os .gifs, extraia [este arquivo](https://drive.google.com/file/d
    É uma boa prática criar um ambiente virtual para separar as dependências do projeto da sua máquina. Para isso, abra um terminal na pasta do repositório e entre:
 
 ```
-python -m venv .venv 
+python3 -m venv .venv 
 source ./bin/activate
 ```
 
