@@ -33,12 +33,13 @@ Para visualizar os .gifs, extraia [este arquivo](https://drive.google.com/file/d
 
 ## Como rodar o código
 
-1. Criar um ambiente virtual para o projeto
-   É uma boa prática criar um ambiente virtual para separar as dependências do projeto da sua máquina. Para isso, abra um terminal na pasta do repositório e entre:
+1. Criar um ambiente virtual para o projeto  
+
+É uma boa prática criar um ambiente virtual para separar as dependências do projeto da sua máquina. Para isso, abra um terminal na pasta do repositório e entre:
 
 ```
 python3 -m venv .venv 
-source ./bin/activate
+source .venv/bin/activate
 ```
 
 2. Após instalar as bibliotecas acima, e, dentro do ambiente virtual, podemos baixar as dependências do projeto:
@@ -49,7 +50,9 @@ source ./bin/activate
 
 4. Entre no arquivo `.env` e defina o caminho para `SERVER_LOG_FILE_PATH`. Por padrão, o caminho é `server.log`.
 
-5. Por fim, para iniciar o servidor, execute a `app.py` no seu terminal:
+5. É possível definir, também, uma pasta para armazenar todas as experiências, no arquivo `.env`. Entre o caminho da pasta desejada na variável `DATA_FILE_PATH`. Por padrão, está utilizando a própria pasta do servidor.
+
+6. Por fim, para iniciar o servidor, execute a `app.py` no seu terminal:
 
 `python3 app.py`
 
