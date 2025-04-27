@@ -50,7 +50,7 @@ source .venv/bin/activate
 
 4. Entre no arquivo `.env` e defina o caminho para `SERVER_LOG_FILE_PATH`. Por padrão, o caminho é `server.log`.
 
-5. É possível definir, também, uma pasta para armazenar todas as experiências, no arquivo `.env`. Entre o caminho da pasta desejada na variável `DATA_FILE_PATH`. Por padrão, está utilizando a própria pasta do servidor.
+5. É possível definir, também, uma pasta para armazenar todas as experiências, no arquivo `.env`. Entre o caminho da pasta desejada na variável `DATA_FILE_PATH`. Por padrão, está utilizando a própria pasta do servidor. Importante: certifique-se que a pasta exista no caminho que você declarou.
 
 6. Por fim, para iniciar o servidor, execute a `app.py` no seu terminal:
 
