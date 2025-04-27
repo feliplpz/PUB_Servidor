@@ -106,7 +106,10 @@
         </div>
 
         {% if 'accelerometer' in device.sensors %}
-            <script src="../js/device.js"></script>
+            <script>
+                window.DEVICE_ID = "{{ device_id }}";
+            </script>
+            <script src="{{ url_for('static', filename='js/device.js') }}"></script>
         {% endif %}
     </body>
 </html>

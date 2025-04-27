@@ -5,6 +5,8 @@ let graphData = {
     z: []
 };
 
+const device_id = window.DEVICE_ID;
+
 const layout = {
     title: 'Aceleração nos Eixos X, Y e Z',
     xaxis: {
@@ -89,7 +91,7 @@ async function fetchData() {
     loading.style.display = 'block'; // Mostra o indicador de carregamento
 
     try {
-        const response = await fetch('/api/device/ {{ device_id }}/data/accelerometer');
+        const response = await fetch(`/api/device/${device_id}/data/accelerometer`);
         if (!response.ok) {
             throw new Error(`Erro na requisição: ${response.statusText
                 }`);

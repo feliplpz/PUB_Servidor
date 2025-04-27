@@ -4,10 +4,12 @@ from flask import Flask
 from dotenv import load_dotenv
 from src.connection.bluetooth_server import BluetoothConnection
 from src.utils.logging import Logger
-from flask_socketio import SocketIO
 from src.web.routes import register_routes
-from src.web.socket_events import register_socket_events
-from src.connection.websocket_manager import WebSocketManager
+
+# from flask_socketio import SocketIO
+# from src.web.socket_events import register_socket_events
+
+# from src.connection.websocket_manager import WebSocketManager
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -16,15 +18,19 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 # Inicializa o Flask
-app = Flask(__name__, template_folder="src/web/templates")
-socketio = SocketIO(app, cors_allowed_origins="*")
+app = Flask(
+    __name__,
+)
+
+# Inicializa socket para consumir dados emitidos por WebSocket
+# socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Cria o gerenciador WebSocket
-websocket_manager = WebSocketManager(socketio)
+# websocket_manager = WebSocketManager(socketio)
 
 # Registra rotas e eventos de socket
 register_routes(app)
-register_socket_events(socketio)
+# register_socket_events(socketio)
 
 
 async def main():
@@ -33,12 +39,7 @@ async def main():
     await asyncio.gather(
         bluetooth_server.start_server(),
         asyncio.to_thread(
-            socketio.run,
-            app,
-            host="0.0.0.0",
-            port=5000,
-            debug=False,
-            use_reloader=False,
+            app.run, host="0.0.0.0", port=5000, use_reloader=False, threaded=True
         ),
     )
 
