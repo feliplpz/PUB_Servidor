@@ -12,7 +12,7 @@ class DeviceManager:
     """Gerencia dispositivos conectados ao servidor"""
 
     # Dicionário para armazenar informações sobre dispositivos conectados
-    _devices = {}
+    devices = {}
 
     @staticmethod
     def generate_device_id():
@@ -33,8 +33,8 @@ class DeviceManager:
             device_id (str): ID único do dispositivo
             device_name (str): Nome do dispositivo Bluetooth
         """
-        if device_id not in cls._devices:
-            cls._devices[device_id] = {
+        if device_id not in cls.devices:
+            cls.devices[device_id] = {
                 "name": device_name,
                 "connected_at": datetime.now().isoformat(),
                 "sensors": {},
@@ -49,7 +49,7 @@ class DeviceManager:
         Returns:
             dict: Dicionário com informações de todos os dispositivos
         """
-        return cls._devices
+        return cls.devices
 
 
 class BluetoothConnection:
@@ -78,6 +78,7 @@ class BluetoothConnection:
             received_data += chunk
         return received_data
 
+
     async def handle_client(self, socket, device_id):
         """
         Lida com conexões de clientes Bluetooth
@@ -96,8 +97,14 @@ class BluetoothConnection:
                 "accelerometer", device_id, int(os.getenv("MAX_DATA_POINTS", 100))
             )
 
-            # Registra o sensor no dispositivo
-            DeviceManager._devices[device_id]["sensors"]["accelerometer"] = accel_sensor
+            # Cria um sensor de giroscópio para o dispositivo
+            gyro_sensor = SensorFactory.create_sensor(
+                "gyroscope", device_id, int(os.getenv("MAX_DATA_POINTS", 100))
+            )
+
+            # Registra os sensores no dispositivo
+            DeviceManager.devices[device_id]["sensors"]["accelerometer"] = accel_sensor
+            DeviceManager.devices[device_id]["sensors"]["gyroscope"] = gyro_sensor
 
             while True:
                 try:
@@ -132,9 +139,15 @@ class BluetoothConnection:
 
                     Logger.log_message(f"Dados recebidos de {device_name}: {message}")
 
-                    # Processa e salva os dados do acelerômetro
-                    if accel_sensor.process_data(message):
+                    # Processa e salva os dados com base no tipo do sensor
+                    sensor_type = message.get("type")
+
+                    if sensor_type == "accelerometer" and accel_sensor.process_data(message):
                         accel_sensor.save_to_file(message, device_name, device_id)
+                    elif sensor_type == "gyroscope" and gyro_sensor.process_data(message):
+                        gyro_sensor.save_to_file(message, device_name, device_id)
+                    else:
+                        Logger.log_message(f"Tipo de sensor desconhecido ou dados inválidos: {sensor_type}")
 
                 except (asyncio.TimeoutError, bluetooth.btcommon.BluetoothError) as e:
                     Logger.log_message(f"Erro na conexão: {e}")
