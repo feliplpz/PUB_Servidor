@@ -89,8 +89,11 @@ class Accelerometer(Sensor):
             accel_x = data.get("x", float("nan"))
             accel_y = data.get("y", float("nan"))
             accel_z = data.get("z", float("nan"))
-
-            timestamp = datetime.now().isoformat()
+            if self.dados_milissegundos:
+                current_time_seconds = time.time()
+                timestamp = round(current_time_seconds - self.start_time, 4)
+            else: 
+                timestamp = datetime.now().isoformat()
             file_path = (
                 os.getenv("DATA_FILE_PATH", "")
                 + ACCELEROMETER
