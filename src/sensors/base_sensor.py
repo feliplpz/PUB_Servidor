@@ -19,11 +19,7 @@ class Sensor(ABC):
         self.device_id = device_id
         self.max_data_points = max_data_points
         self.data_lock = Lock()
-        
-   
-        dados_milissegundos_str = os.getenv("DADOS_MILISSEGUNDOS", "false")
-        self.dados_milissegundos = dados_milissegundos_str.lower() == "true"
-        
+        self.date_in_milliseconds = (os.getenv('DADOS_MILISSEGUNDOS', 'False') == 'True')
         self.initialize_data_storage()
 
     @abstractmethod

@@ -84,7 +84,7 @@ class Accelerometer(Sensor):
             accel_x = data.get("x", float("nan"))
             accel_y = data.get("y", float("nan"))
             accel_z = data.get("z", float("nan"))
-            if self.dados_milissegundos:
+            if self.date_in_milliseconds:
                 current_time_seconds = time.time()
                 timestamp = round(current_time_seconds - self.start_time, 4)
             else: 
