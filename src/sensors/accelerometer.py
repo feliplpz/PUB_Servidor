@@ -11,6 +11,7 @@ class Accelerometer(Sensor):
 
     def initialize_data_storage(self):
         """Inicializa as estruturas de dados para armazenamento do acelerômetro"""
+        self.header_time = datetime.now()
         self.start_time = time.time()
         self.data_t = deque(maxlen=self.max_data_points)
         self.data_x = deque(maxlen=self.max_data_points)
@@ -89,6 +90,7 @@ class Accelerometer(Sensor):
                 timestamp = round(current_time_seconds - self.start_time, 4)
             else: 
                 timestamp = datetime.now().isoformat()
+            start_time_formatted = datetime.fromtimestamp(self.start_time).strftime('%d_%m_%y___%H_%M_%S')
             file_path = (
                 os.getenv("DATA_FILE_PATH", "")
                 + ACCELEROMETER
@@ -96,6 +98,8 @@ class Accelerometer(Sensor):
                 + device_name
                 + DIVIDER
                 + device_id
+                + DIVIDER
+                + start_time_formatted
                 + EXTENSION
             )
             is_new_file = not os.path.exists(file_path)
@@ -103,10 +107,11 @@ class Accelerometer(Sensor):
             with open(file_path, "a+") as f:
                 if is_new_file:
                     f.write(
-                        "timestamp,device_id,device_name,sensor_type,accel_x,accel_y,accel_z\n"
+                        "timestamp,accel_x,accel_y,accel_z\n"
                     )
+                    
                 f.write(
-                    f"{timestamp},{self.device_id},{device_name},{ACCELEROMETER},{accel_x},{accel_y},{accel_z}\n"
+                    f"{timestamp},{accel_x},{accel_y},{accel_z}\n"
                 )
             return True
         except Exception as e:

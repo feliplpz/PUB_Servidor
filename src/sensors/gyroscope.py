@@ -62,7 +62,7 @@ class Gyroscope(Accelerometer):
                 timestamp = round(current_time_seconds - self.start_time, 4)
             else:
                 timestamp = datetime.now().isoformat()
-
+            start_time_formatted = datetime.fromtimestamp(self.start_time).strftime('%d_%m_%y___%H_%M_%S')
             file_path = (
                     os.getenv("DATA_FILE_PATH", "")
                     + GYROSCOPE
@@ -70,6 +70,8 @@ class Gyroscope(Accelerometer):
                     + device_name
                     + DIVIDER
                     + device_id
+                    + DIVIDER
+                    + start_time_formatted
                     + EXTENSION
             )
             is_new_file = not os.path.exists(file_path)
@@ -77,10 +79,10 @@ class Gyroscope(Accelerometer):
             with open(file_path, "a+") as f:
                 if is_new_file:
                     f.write(
-                        "timestamp,device_id,device_name,sensor_type,gyro_x,gyro_y,gyro_z\n"
+                        "timestamp,gyro_x,gyro_y,gyro_z\n"
                     )
                 f.write(
-                    f"{timestamp},{self.device_id},{device_name},{GYROSCOPE},{gyro_x},{gyro_y},{gyro_z}\n"
+                    f"{timestamp},{gyro_x},{gyro_y},{gyro_z}\n"
                 )
             return True
         except Exception as e:
