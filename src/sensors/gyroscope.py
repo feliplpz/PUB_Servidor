@@ -1,49 +1,47 @@
 import os
 from datetime import datetime
+import time
 
+from src.connection.event_bus import EventBus
+from src.sensors.accelerometer import Accelerometer
+from src.sensors.base_sensor import GYROSCOPE, DIVIDER, EXTENSION
 from src.utils.logging import Logger
 
 
-class Gyroscope:
+class Gyroscope(Accelerometer):
     """Sensor de giroscópio"""
 
-    def __init__(self, device_id, max_data_points):
-        """
-        Inicializa o sensor de giroscópio
-
-        Args:
-            device_id (str): ID do dispositivo
-            max_data_points (int): Número máximo de pontos de dados
-        """
-        self.device_id = device_id
-        self.max_data_points = max_data_points
-        self.data_points = []
-
     def process_data(self, data):
-        """
-        Processa os dados do giroscópio
+        try:
+            accel_x = data.get("x", float("nan"))
+            accel_y = data.get("y", float("nan"))
+            accel_z = data.get("z", float("nan"))
 
-        Args:
-            data (dict): Dados do giroscópio
+            if not all(
+                    isinstance(v, (int, float)) for v in (accel_x, accel_y, accel_z)
+            ):
+                return False
 
-        Returns:
-            bool: True se os dados foram processados com sucesso
-        """
-        if "type" not in data or data["type"] != "gyroscope":
+            with self.data_lock:
+                current_time = time.time() - self.start_time
+                self.data_t.append(current_time)
+                self.data_x.append(accel_x)
+                self.data_y.append(accel_y)
+                self.data_z.append(accel_z)
+
+            EventBus.publish(
+                "sensor_update",
+                {
+                    "device_id": self.device_id,
+                    "sensor_type": GYROSCOPE,
+                    "data": self.get_data(),
+                },
+            )
+
+            return True
+        except Exception as e:
+            Logger.log_message(f"Erro ao processar dados do giroscópio: {e}")
             return False
-
-        if "x" not in data or "y" not in data or "z" not in data:
-            return False
-
-        # Adiciona timestamp
-        data["timestamp"] = datetime.now().isoformat()
-
-        # Limita o número de pontos armazenados
-        if len(self.data_points) >= self.max_data_points:
-            self.data_points.pop(0)
-
-        self.data_points.append(data)
-        return True
 
     def save_to_file(self, data, device_name, device_id):
         """
@@ -55,23 +53,36 @@ class Gyroscope:
             device_id (str): ID do dispositivo
         """
         try:
-            timestamp = datetime.now().strftime("%Y%m%d")
-            filename = f"data/gyroscope_{device_id}_{timestamp}.csv"
+            gyro_x = data.get("x", float("nan"))
+            gyro_y = data.get("y", float("nan"))
+            gyro_z = data.get("z", float("nan"))
 
-            # Cria diretório se não existir
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            if self.dados_milissegundos:
+                current_time_seconds = time.time()
+                timestamp = round(current_time_seconds - self.start_time, 4)
+            else:
+                timestamp = datetime.now().isoformat()
 
-            # Verifica se o arquivo já existe
-            file_exists = os.path.isfile(filename)
+            file_path = (
+                    os.getenv("DATA_FILE_PATH", "")
+                    + GYROSCOPE
+                    + DIVIDER
+                    + device_name
+                    + DIVIDER
+                    + device_id
+                    + EXTENSION
+            )
+            is_new_file = not os.path.exists(file_path)
 
-            with open(filename, "a") as f:
-                # Escreve o cabeçalho se for um novo arquivo
-                if not file_exists:
-                    f.write("timestamp,device_id,device_name,x,y,z\n")
-
-                # Escreve os dados
-                f.write(f"{data['timestamp']},{device_id},{device_name},{data['x']},{data['y']},{data['z']}\n")
-
-            Logger.log_message(f"Dados do giroscópio salvos em {filename}")
+            with open(file_path, "a+") as f:
+                if is_new_file:
+                    f.write(
+                        "timestamp,device_id,device_name,sensor_type,gyro_x,gyro_y,gyro_z\n"
+                    )
+                f.write(
+                    f"{timestamp},{self.device_id},{device_name},{GYROSCOPE},{gyro_x},{gyro_y},{gyro_z}\n"
+                )
+            return True
         except Exception as e:
             Logger.log_message(f"Erro ao salvar dados do giroscópio: {e}")
+            return False

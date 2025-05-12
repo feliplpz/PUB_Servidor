@@ -3,13 +3,8 @@ import os
 import time
 from collections import deque
 from src.utils.logging import Logger
-from src.sensors.base_sensor import Sensor
+from src.sensors.base_sensor import Sensor, ACCELEROMETER, DIVIDER, EXTENSION
 from src.connection.event_bus import EventBus
-
-ACCELEROMETER = "accelerometer"
-DIVIDER = "_"
-EXTENSION = ".csv"
-
 
 class Accelerometer(Sensor):
     """Implementação do sensor de acelerômetro"""
@@ -51,7 +46,7 @@ class Accelerometer(Sensor):
                 "sensor_update",
                 {
                     "device_id": self.device_id,
-                    "sensor_type": "accelerometer",
+                    "sensor_type": ACCELEROMETER,
                     "data": self.get_data(),
                 },
             )
@@ -111,7 +106,7 @@ class Accelerometer(Sensor):
                         "timestamp,device_id,device_name,sensor_type,accel_x,accel_y,accel_z\n"
                     )
                 f.write(
-                    f"{timestamp},{self.device_id},{device_name},accelerometer,{accel_x},{accel_y},{accel_z}\n"
+                    f"{timestamp},{self.device_id},{device_name},{ACCELEROMETER},{accel_x},{accel_y},{accel_z}\n"
                 )
             return True
         except Exception as e:

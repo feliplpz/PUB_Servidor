@@ -2,6 +2,10 @@ from threading import Lock
 from abc import ABC, abstractmethod
 import os
 
+ACCELEROMETER = "accelerometer"
+GYROSCOPE = "gyroscope"
+DIVIDER = "_"
+EXTENSION = ".csv"
 class Sensor(ABC):
     """Classe abstrata para sensores"""
 
