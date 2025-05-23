@@ -6,6 +6,8 @@ let graphData = {
 };
 
 const device_id = window.DEVICE_ID;
+let websocket = null;
+let reconnectInterval = null;
 
 const layout = {
     title: 'Aceleração nos Eixos X, Y e Z',
@@ -80,43 +82,87 @@ function toggleGraph(axis) {
     updateGraph();
 }
 
-// Botões para alternar gráficos
+
+
+function connectWebSocket() {
+    console.log('TENTANDO CONECTAR WEBSOCKET:', device_id);  
+    const loading = document.getElementById('loading');
+    
+   
+    websocket = new WebSocket(`ws://127.0.0.1:5000/ws/device/${device_id}/sensor/accelerometer`);
+      websocket.onopen = function(event) {
+        console.log('WebSocket conectado');
+        loading.style.display = 'none';
+        
+       
+        if (reconnectInterval) {
+            clearInterval(reconnectInterval);
+            reconnectInterval = null;
+        }
+    };
+    
+    websocket.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            console.log('Dados recebidos via WebSocket:', data);
+            
+            // Atualizar dados do gráfico
+            graphData = data;
+            
+            // Atualizar arrays do Plotly
+            plotlyData[0].x = graphData.time;
+            plotlyData[0].y = graphData.x;
+            plotlyData[1].x = graphData.time;
+            plotlyData[1].y = graphData.y;
+            plotlyData[2].x = graphData.time;
+            plotlyData[2].y = graphData.z;
+            
+           
+            updateGraph();
+            
+        } catch (error) {
+            console.error('Erro ao processar dados WebSocket:', error);
+        }
+    };
+    
+    
+    websocket.onerror = function(error) {
+        console.error('Erro WebSocket:', error);
+        loading.style.display = 'block';
+        loading.textContent = 'Erro na conexão...';
+    };
+    
+    websocket.onclose = function(event) {
+        console.log('WebSocket desconectado:', event.code, event.reason);
+        loading.style.display = 'block';
+        loading.textContent = 'Reconectando...';
+        
+        if (!reconnectInterval) {
+            reconnectInterval = setInterval(function() {
+                console.log('Tentando reconectar...');
+                connectWebSocket();
+            }, 2000);
+        }
+    };
+}
+
+// Função para desconectar WebSocket
+function disconnectWebSocket() {
+    if (websocket) {
+        websocket.close();
+        websocket = null;
+    }
+    if (reconnectInterval) {
+        clearInterval(reconnectInterval);
+        reconnectInterval = null;
+    }
+}
 document.getElementById('toggle-x').addEventListener('click', () => toggleGraph('x'));
 document.getElementById('toggle-y').addEventListener('click', () => toggleGraph('y'));
 document.getElementById('toggle-z').addEventListener('click', () => toggleGraph('z'));
+window.addEventListener('beforeunload', function() {
+    disconnectWebSocket();
+});
 
-// Função para buscar dados do servidor
-async function fetchData() {
-    const loading = document.getElementById('loading');
-    loading.style.display = 'block'; // Mostra o indicador de carregamento
-
-    try {
-        const response = await fetch(`/api/device/${device_id}/data/accelerometer`);
-        if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.statusText
-                }`);
-        }
-        const data = await response.json();
-        graphData = data;
-
-        // Atualiza os dados do gráfico
-        plotlyData[0].x = graphData.time;
-        plotlyData[0].y = graphData.x;
-        plotlyData[1].x = graphData.time;
-        plotlyData[1].y = graphData.y;
-        plotlyData[2].x = graphData.time;
-        plotlyData[2].y = graphData.z;
-
-        updateGraph();
-    } catch (error) {
-        console.error('Erro ao buscar dados:', error);
-    } finally {
-        loading.style.display = 'none'; // Oculta o indicador de carregamento
-    }
-}
-
-// Atualiza o gráfico periodicamente
-setInterval(fetchData, 500);
-
-// Inicializa o gráfico
 Plotly.newPlot('graph', plotlyData, layout);
+connectWebSocket();

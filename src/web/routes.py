@@ -1,78 +1,64 @@
 from src.connection.bluetooth_server import DeviceManager
 from src.data.data_visualizer import DataVisualizer
-from flask import jsonify, render_template, Response, redirect, url_for
-
-
-def register_routes(app):
-    """Registra as rotas da aplicação Flask"""
-
-    @app.route("/")
-    def index():
-        """
-        Rota principal que lista todos os dispositivos conectados
-
-        Returns:
-            str: Página HTML com a lista de dispositivos
-        """
+from fastapi import Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+def register_routes(app, templates,websocket_manager):
+    
+    @app.get("/", response_class=HTMLResponse)
+    async def index(request: Request):
+        """Rota principal que lista todos os dispositivos conectados"""
         devices = DeviceManager.get_all_devices()
-        return render_template("index.html", devices=devices)
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "devices": devices
+        })
 
-    @app.route("/device/<device_id>")
-    def device_page(device_id):
-        """
-        Rota para página específica de um dispositivo
-
-        Args:
-            device_id (str): ID do dispositivo
-
-        Returns:
-            str: Página HTML com detalhes do dispositivo e seus sensores
-        """
+    @app.get("/device/{device_id}", response_class=HTMLResponse)
+    async def device_page(request: Request, device_id: str):
+        """Rota para página específica de um dispositivo"""
         devices = DeviceManager.get_all_devices()
         if device_id not in devices:
-            return redirect(url_for("index"))
+            return RedirectResponse(url="/")
+        
+        return templates.TemplateResponse("device.html", {
+            "request": request,
+            "device": devices[device_id],
+            "device_id": device_id
+        })
 
-        return render_template(
-            "device.html",
-            device=devices[device_id],
-            device_id=device_id,
-        )
-
-    @app.route("/api/device/<device_id>/data/<sensor_type>")
-    def get_device_data(device_id, sensor_type):
-        """
-        Rota API para obter dados de um sensor específico
-
-        Args:
-            device_id (str): ID do dispositivo
-            sensor_type (str): Tipo de sensor
-
-        Returns:
-            json: Dados do sensor
-        """
+    @app.get("/api/device/{device_id}/data/{sensor_type}") 
+    async def get_device_data(device_id: str, sensor_type: str):  
+        """Rota API para obter dados de um sensor específico"""
         devices = DeviceManager.get_all_devices()
-
+        
         if device_id not in devices or sensor_type not in devices[device_id]["sensors"]:
-            return jsonify({"error": "Dispositivo ou sensor não encontrado"}), 404
-
+            return JSONResponse({"error": "Dispositivo ou sensor não encontrado"}, status_code=404)  
+        
         sensor = devices[device_id]["sensors"][sensor_type]
-        return jsonify(sensor.get_data())
+        return sensor.get_data() 
 
-    @app.route("/api/device/<device_id>/plot/<sensor_type>.png")
-    def get_device_plot(device_id, sensor_type):
-        """
-        Rota para obter o gráfico de um sensor específico
-
-        Args:
-            device_id (str): ID do dispositivo
-            sensor_type (str): Tipo de sensor
-
-        Returns:
-            Response: Imagem do gráfico em formato PNG
-        """
+    @app.get("/api/device/{device_id}/plot/{sensor_type}.png")  
+    async def get_device_plot(device_id: str, sensor_type: str): 
+        """Rota para obter o gráfico de um sensor específico"""
         img = DataVisualizer.generate_plot_data(device_id, sensor_type)
-
+        
         if img:
-            return Response(img.getvalue(), mimetype="image/png")
+            return Response(content=img.getvalue(), media_type="image/png")  
         else:
-            return Response(status=404)
+            return Response(status_code=404)  
+        
+    @app.websocket("/ws/device/{device_id}/sensor/{sensor_type}")
+    async def websocket_endpoint(websocket: WebSocket, device_id: str, sensor_type: str):
+        print(f"ENTATIVA DE CONEXÃO: {device_id}_{sensor_type}") 
+        await websocket_manager.connect(websocket, device_id, sensor_type) 
+        
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            websocket_manager.disconnect(websocket, device_id, sensor_type) 
+
+    @app.websocket("/ws/devices")
+    async def device_list_websocket(websocket: WebSocket):
+            await websocket.accept()
+        

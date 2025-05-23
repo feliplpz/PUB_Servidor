@@ -1,48 +1,42 @@
 import logging
 import asyncio
-from flask import Flask
+import uvicorn
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 from src.connection.bluetooth_server import BluetoothConnection
 from src.utils.logging import Logger
 from src.web.routes import register_routes
+from src.connection.websocket_manager import WebSocketManager
 
-# from flask_socketio import SocketIO
-# from src.web.socket_events import register_socket_events
-
-# from src.connection.websocket_manager import WebSocketManager
 
 # Carrega variáveis de ambiente
 load_dotenv()
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+websocket_manager = WebSocketManager()
 
 # Inicializa o Flask
-app = Flask(
-    __name__,
-)
+app = FastAPI()
 
-# Inicializa socket para consumir dados emitidos por WebSocket
-# socketio = SocketIO(app, cors_allowed_origins="*")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
-# Cria o gerenciador WebSocket
-# websocket_manager = WebSocketManager(socketio)
-
-# Registra rotas e eventos de socket
-register_routes(app)
-# register_socket_events(socketio)
+register_routes(app,templates,websocket_manager)
 
 
 async def main():
-    """Função principal que inicia o servidor Bluetooth e o servidor Flask com WebSockets"""
     bluetooth_server = BluetoothConnection()
+    
+    config = uvicorn.Config(app, host="0.0.0.0", port=5000)
+    server = uvicorn.Server(config)
+    
     await asyncio.gather(
         bluetooth_server.start_server(),
-        asyncio.to_thread(
-            app.run, host="0.0.0.0", port=5000, use_reloader=False, threaded=True
-        ),
+        server.serve()
     )
-
 
 if __name__ == "__main__":
     try:
