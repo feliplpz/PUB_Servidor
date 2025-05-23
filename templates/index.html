@@ -29,6 +29,26 @@
             font-size: 18px;
             margin: 30px 0 15px;
             color: #aaa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status {
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: #333;
+        }
+
+        .status.connected {
+            background-color: #2d5a2d;
+            color: #90EE90;
+        }
+
+        .status.disconnected {
+            background-color: #5a2d2d;
+            color: #FFB6C1;
         }
 
         .device-list {
@@ -44,6 +64,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .device-item.new {
+            background-color: #2d4a2d;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .device-name {
@@ -80,18 +111,30 @@
             color: #888;
             padding: 30px;
         }
+
+        .loading {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="title">Servidor de Sensores Bluetooth</div>
         
-        <div class="subtitle">Dispositivos Conectados</div>
+        <div class="subtitle">
+            <span>Dispositivos Conectados</span>
+            <span class="status disconnected" id="connectionStatus">Desconectado</span>
+        </div>
         
-        {% if devices %}
-            <ul class="device-list">
+        <div class="loading" id="loading">Conectando ao servidor...</div>
+        
+        <ul class="device-list" id="deviceList">
+            {% if devices %}
                 {% for device_id, device in devices.items() %}
-                <li class="device-item">
+                <li class="device-item" data-device-id="{{ device_id }}">
                     <div>
                         <div class="device-name">{{ device.name }}</div>
                         <div class="device-id">ID: {{ device_id }}</div>
@@ -100,10 +143,154 @@
                     <a href="/device/{{ device_id }}" class="device-link">Ver detalhes</a>
                 </li>
                 {% endfor %}
-            </ul>
-        {% else %}
-            <div class="no-devices">Nenhum dispositivo conectado.</div>
-        {% endif %}
+            {% else %}
+                <div class="no-devices" id="noDevices">Nenhum dispositivo conectado.</div>
+            {% endif %}
+        </ul>
     </div>
+
+    <script>
+        let websocket = null;
+        let reconnectInterval = null;
+        let isConnected = false;
+
+        function connectWebSocket() {
+            const loading = document.getElementById('loading');
+            const status = document.getElementById('connectionStatus');
+            
+            // Detecta protocolo e host
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsHost = window.location.host;
+            const wsUrl = `${wsProtocol}//${wsHost}/ws/devices`;
+            
+            console.log('Conectando WebSocket:', wsUrl);
+            loading.style.display = 'block';
+            
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = function(event) {
+                console.log('WebSocket da lista de dispositivos conectado');
+                isConnected = true;
+                loading.style.display = 'none';
+                status.textContent = 'Conectado';
+                status.className = 'status connected';
+                
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+            
+            websocket.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    console.log('Mensagem recebida:', message);
+                    
+                    if (message.type === 'device_list_update') {
+                        updateDeviceList(message.devices);
+                    }
+                } catch (error) {
+                    console.error('Erro ao processar mensagem:', error);
+                }
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('Erro WebSocket:', error);
+                isConnected = false;
+                loading.style.display = 'block';
+                status.textContent = 'Erro na conexão';
+                status.className = 'status disconnected';
+            };
+            
+            websocket.onclose = function(event) {
+                console.log('WebSocket desconectado:', event);
+                isConnected = false;
+                loading.style.display = 'none';
+                status.textContent = 'Desconectado';
+                status.className = 'status disconnected';
+                
+                if (event.code !== 1000 && !reconnectInterval) {
+                    reconnectInterval = setInterval(function() {
+                        console.log('Tentando reconectar...');
+                        connectWebSocket();
+                    }, 3000);
+                }
+            };
+        }
+
+        function updateDeviceList(devices) {
+            const deviceList = document.getElementById('deviceList');
+            const noDevices = document.getElementById('noDevices');
+            
+            
+            deviceList.innerHTML = '';
+            
+            if (Object.keys(devices).length === 0) {
+                // Nenhum dispositivo
+                if (!noDevices) {
+                    const noDevDiv = document.createElement('div');
+                    noDevDiv.id = 'noDevices';
+                    noDevDiv.className = 'no-devices';
+                    noDevDiv.textContent = 'Nenhum dispositivo conectado.';
+                    deviceList.appendChild(noDevDiv);
+                }
+            } else {
+                // Remove mensagem "nenhum dispositivo"
+                if (noDevices) {
+                    noDevices.remove();
+                }
+                
+                // Adiciona dispositivos
+                for (const [deviceId, device] of Object.entries(devices)) {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'device-item new';
+                    listItem.setAttribute('data-device-id', deviceId);
+                    
+                    listItem.innerHTML = `
+                        <div>
+                            <div class="device-name">${device.name}</div>
+                            <div class="device-id">ID: ${deviceId}</div>
+                            <div class="device-time">Conectado em: ${device.connected_at}</div>
+                        </div>
+                        <a href="/device/${deviceId}" class="device-link">Ver detalhes</a>
+                    `;
+                    
+                    deviceList.appendChild(listItem);
+                    
+                    // Remove classe 'new' após animação
+                    setTimeout(() => {
+                        listItem.classList.remove('new');
+                    }, 500);
+                }
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (websocket && isConnected) {
+                websocket.close(1000, 'Fechando página');
+                websocket = null;
+                isConnected = false;
+            }
+            if (reconnectInterval) {
+                clearInterval(reconnectInterval);
+                reconnectInterval = null;
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('beforeunload', function() {
+            disconnectWebSocket();
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible' && !isConnected) {
+                console.log('Página voltou ao foco, reconectando...');
+                connectWebSocket();
+            }
+        });
+
+        // Conecta ao WebSocket quando a página carrega
+        connectWebSocket();
+    </script>
 </body>
 </html>

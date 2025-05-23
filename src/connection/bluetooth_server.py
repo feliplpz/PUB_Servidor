@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime
 from src.utils.logging import Logger
+from src.connection.event_bus import EventBus
 import os
 import asyncio
 import bluetooth
@@ -40,6 +41,32 @@ class DeviceManager:
                 "sensors": {},
             }
             Logger.log_message(f"Dispositivo registrado: {device_name} ({device_id})")
+            
+            # Publica evento de dispositivo conectado
+            EventBus.publish("device_connected", {
+                "device_id": device_id,
+                "device_name": device_name,
+                "connected_at": cls.devices[device_id]["connected_at"]
+            })
+
+    @classmethod
+    def unregister_device(cls, device_id):
+        """
+        Remove um dispositivo do sistema
+
+        Args:
+            device_id (str): ID único do dispositivo
+        """
+        if device_id in cls.devices:
+            device_name = cls.devices[device_id]["name"]
+            del cls.devices[device_id]
+            Logger.log_message(f"Dispositivo removido: {device_name} ({device_id})")
+            
+            # Publica evento de dispositivo desconectado
+            EventBus.publish("device_disconnected", {
+                "device_id": device_id,
+                "device_name": device_name
+            })
 
     @classmethod
     def get_all_devices(cls):
@@ -78,7 +105,6 @@ class BluetoothConnection:
             received_data += chunk
         return received_data
 
-
     async def handle_client(self, socket, device_id):
         """
         Lida com conexões de clientes Bluetooth
@@ -87,6 +113,7 @@ class BluetoothConnection:
             socket (BluetoothSocket): Socket do cliente conectado
             device_id (str): ID do dispositivo
         """
+        device_name = "Unknown"
         try:
             device_name = bluetooth.lookup_name(socket.getpeername()[0]) or "Unknown"
             DeviceManager.register_device(device_id, device_name)
@@ -161,6 +188,8 @@ class BluetoothConnection:
         finally:
             try:
                 socket.close()
+                # Remove o dispositivo quando desconecta
+                DeviceManager.unregister_device(device_id)
                 Logger.log_message(
                     f"Conexão com {device_name} (ID: {device_id}) encerrada."
                 )
