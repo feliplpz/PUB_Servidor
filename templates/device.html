@@ -1,115 +1,156 @@
-<!-- templates/device.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Dispositivo:
-            {{ device.name }}</title>
+        <title>Dispositivo: {{ device.name }}</title>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background-color: #121212;
-                color: #fff;
-                margin: 0;
-                padding: 20px;
-            }
-
-            .container {
-                text-align: center;
-                max-width: 1200px;
-                margin: 0 auto;
-            }
-
-            .title {
-                font-size: 24px;
-                margin-bottom: 5px;
-            }
-
-            .subtitle {
-                font-size: 16px;
-                color: #aaa;
-                margin-bottom: 20px;
-            }
-
-            #graph {
-                width: 90%;
-                max-width: 1200px;
-                margin: 0 auto;
-                height: 600px;
-            }
-
-            .button-group {
-                margin: 20px 0;
-            }
-
-            .button {
-                background-color: #333;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                cursor: pointer;
-                margin: 5px;
-                border-radius: 5px;
-                transition: background-color 0.3s ease;
-            }
-
-            .button:hover {
-                background-color: #555;
-            }
-
-            .button:disabled {
-                background-color: #777;
-                cursor: not-allowed;
-            }
-
-            .loading {
-                display: none;
-                color: #aaa;
-                margin-top: 20px;
-            }
-
-            .back-link {
-                display: inline-block;
-                margin-bottom: 20px;
-                color: #aaa;
-                text-decoration: none;
-                font-size: 14px;
-            }
-
-            .back-link:hover {
-                color: #fff;
-            }
-        </style>
+        <link rel="stylesheet" href="/static/css/styles.css">
     </head>
     <body>
         <div class="container">
             <a href="/" class="back-link">← Voltar para lista de dispositivos</a>
 
-            <div class="title">{{ device.name }}</div>
-            <div class="subtitle">ID:
-                {{ device_id }}</div>
+            <div class="header">
+                <div class="title">{{ device.name }}</div>
+                <div class="subtitle">ID: {{ device_id }}</div>
+                <div class="subtitle">Conectado em: {{ device.connected_at }}</div>
+            </div>
 
-            {% if 'accelerometer' in device.sensors %}
-                <div class="button-group">
-                    <button class="button" id="toggle-x">Toggle X</button>
-                    <button class="button" id="toggle-y">Toggle Y</button>
-                    <button class="button" id="toggle-z">Toggle Z</button>
+            <!-- Tela de Seleção de Gráficos -->
+            <div id="selection-screen" class="selection-screen">
+                <div class="status-panel">
+                    <div id="connection-status" class="connection-status">
+                        Verificando sensores ativos...
+                    </div>
                 </div>
 
-                <div id="graph"></div>
-                <div id="loading" class="loading">Carregando dados...</div>
-            {% else %}
-                <p>Este dispositivo não possui um sensor de acelerômetro.</p>
-            {% endif %}
+                <!-- Grid de Sensores -->
+                <div id="sensor-grid" class="sensor-grid">
+                    {% if device.sensors %}
+                        <!-- Card do Acelerômetro -->
+                        {% if 'accelerometer' in device.sensors %}
+                        <div class="sensor-card" id="card-accelerometer">
+                            <div class="sensor-icon">[ACC]</div>
+                            <div class="sensor-name">Acelerômetro</div>
+                            <div class="sensor-description">
+                                Mede aceleração linear nos eixos X, Y e Z em m/s²
+                            </div>
+                            <div id="status-accelerometer" class="sensor-status inactive">
+                                Verificando...
+                            </div>
+                            <button 
+                                class="view-graph-btn" 
+                                id="btn-accelerometer"
+                                onclick="showGraph('accelerometer')"
+                                disabled>
+                                Ver Gráfico
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Card do Giroscópio -->
+                        {% if 'gyroscope' in device.sensors %}
+                        <div class="sensor-card" id="card-gyroscope">
+                            <div class="sensor-icon">[GYR]</div>
+                            <div class="sensor-name">Giroscópio</div>
+                            <div class="sensor-description">
+                                Mede velocidade angular nos eixos X, Y e Z em rad/s
+                            </div>
+                            <div id="status-gyroscope" class="sensor-status inactive">
+                                Verificando...
+                            </div>
+                            <button 
+                                class="view-graph-btn" 
+                                id="btn-gyroscope"
+                                onclick="showGraph('gyroscope')"
+                                disabled>
+                                Ver Gráfico
+                            </button>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Mensagem quando nenhum sensor está ativo -->
+                <div id="no-sensors-message" class="no-sensors-message" style="display: none;">
+                    <div class="no-sensors-icon">[!]</div>
+                    <h3>Nenhum sensor ativo</h3>
+                    <p>Ative pelo menos um sensor no aplicativo móvel para começar a visualizar os dados.</p>
+                </div>
+            </div>
+
+            <!-- Tela de Visualização do Gráfico -->
+            <div id="graph-screen" class="graph-screen">
+                <div class="graph-header">
+                    <div>
+                        <div id="current-graph-title" class="graph-title">Gráfico do Sensor</div>
+                        <div id="current-graph-status" class="sensor-status active">Conectado</div>
+                    </div>
+                    <div class="graph-controls">
+                        <button class="button primary" onclick="returnToSelection()">
+                            ← Voltar à Seleção
+                        </button>
+                        <button class="button" id="toggle-x">Toggle X</button>
+                        <button class="button" id="toggle-y">Toggle Y</button>
+                        <button class="button" id="toggle-z">Toggle Z</button>
+                        <button class="button danger" onclick="reconnectCurrentGraph()">
+                            Reconectar WebSocket
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="current-graph" class="graph-container"></div>
+                <div id="loading-current" class="loading">Carregando dados...</div>
+            </div>
         </div>
 
-        {% if 'accelerometer' in device.sensors %}
-            <script>
+        <!-- Scripts -->
+        <!-- Dados JSON seguros para JavaScript -->
+        <script type="application/json" id="device-data">
+            {
+                "device_id": "{{ device_id }}",
+                "device_name": "{{ device.name }}",
+                "connected_at": "{{ device.connected_at }}",
+                "available_sensors": {{ device.sensors.keys() | list | tojson }},
+                "sensor_count": {{ device.sensors | length }}
+            }
+        </script>
+        
+        <script>
+            const deviceDataElement = document.getElementById("device-data");  
+
+            if (deviceDataElement) {
+                
+                try {
+                    // Configuração inicial - método seguro com JSON
+                    const deviceData = JSON.parse(deviceDataElement.textContent);
+                    // Variáveis globais
+                    window.DEVICE_ID = deviceData.device_id;
+                    window.DEVICE_NAME = deviceData.device_name;
+                    window.AVAILABLE_SENSORS = deviceData.available_sensors;
+                    window.CONNECTED_AT = deviceData.connected_at;
+                    
+                    
+                } catch (e) {
+                    console.error('Erro ao parsear JSON:', e);
+                    console.error(' Conteúdo que causou erro:', deviceDataElement.textContent);
+                    
+                    // Fallback manual
+                    window.DEVICE_ID = "{{ device_id }}";
+                    window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope']; 
+                    
+                }
+            } else {
+                console.error('❌ Elemento device-data não encontrado!');
+                // Fallback manual
                 window.DEVICE_ID = "{{ device_id }}";
-            </script>
-            <script src="/static/js/device.js"></script>
-        {% endif %}
+                window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope'];
+            }
+        </script>
+        
+        <!-- Carregar scripts -->
+        <script src="/static/js/graph.js"></script>
+        <script src="/static/js/device.js"></script>
     </body>
 </html>
