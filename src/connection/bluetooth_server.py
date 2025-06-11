@@ -85,25 +85,6 @@ class BluetoothConnection:
     def __init__(self):
         """Inicializa o gerenciador de conexões Bluetooth"""
 
-    async def recv_all(self, socket, length):
-        """
-        Recebe todos os dados do socket até o comprimento especificado
-
-        Args:
-            socket (BluetoothSocket): Socket Bluetooth
-            length (int): Comprimento dos dados a serem recebidos
-
-        Returns:
-            bytes: Dados recebidos
-        """
-        received_data = b""
-        while len(received_data) < length:
-            chunk = await asyncio.to_thread(socket.recv, length - len(received_data))
-            if not chunk:
-                break
-            received_data += chunk
-        return received_data
-
     async def handle_client(self, socket, device_id):
         """
         Lida com conexões de clientes Bluetooth
