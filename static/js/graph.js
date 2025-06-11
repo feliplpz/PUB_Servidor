@@ -1,7 +1,3 @@
-/**
- * Classe para gerenciar gráficos de sensores com WebSocket
- * Versão simplificada e robusta
- */
 class SensorGraph {
     constructor(config) {
         this.deviceId = config.deviceId;

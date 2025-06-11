@@ -66,11 +66,39 @@ body {
     border-radius: 10px;
     margin-bottom: 30px;
     text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.status-panel.checking {
+    border-color: #FFA500;
+    background-color: #2a2119;
+}
+
+.status-panel.active {
+    border-color: #4CAF50;
+    background-color: #1a2e1a;
+}
+
+.status-panel.inactive {
+    border-color: #f44336;
+    background-color: #2e1a1a;
 }
 
 .connection-status {
     font-size: 18px;
     margin-bottom: 15px;
+    position: relative;
+}
+
+.connection-status.updating::before {
+    content: "🔄 ";
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Grid de Sensores */
@@ -86,24 +114,59 @@ body {
     border-radius: 10px;
     padding: 25px;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.4s ease;
     border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.sensor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.sensor-card.checking::before {
+    left: 100%;
 }
 
 .sensor-card.active {
     border-color: #4CAF50;
     background-color: #1a2e1a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
 }
 
 .sensor-card.inactive {
-    opacity: 0.5;
+    opacity: 0.7;
     border-color: #f44336;
     background-color: #2e1a1a;
+}
+
+.sensor-card.transitioning {
+    border-color: #FFA500;
+    background-color: #2a2119;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
 }
 
 .sensor-icon {
     font-size: 48px;
     margin-bottom: 15px;
+    transition: transform 0.3s ease;
+}
+
+.sensor-card.active .sensor-icon {
+    transform: scale(1.1);
 }
 
 .sensor-name {
@@ -126,16 +189,46 @@ body {
     margin-bottom: 15px;
     display: inline-block;
     transition: all 0.3s ease;
+    position: relative;
+    min-width: 120px;
 }
 
 .sensor-status.active {
     background-color: #2d5a2d;
     color: #90EE90;
+    animation: glow-green 2s ease-in-out infinite alternate;
 }
 
 .sensor-status.inactive {
     background-color: #5a2d2d;
     color: #FFB6C1;
+}
+
+.sensor-status.checking {
+    background-color: #5a4a2d;
+    color: #FFA500;
+    animation: glow-orange 1.5s ease-in-out infinite alternate;
+}
+
+.sensor-status.transitioning {
+    background-color: #4a4a2d;
+    color: #FFFF99;
+    animation: fade 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow-green {
+    from { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+    to { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
+}
+
+@keyframes glow-orange {
+    from { box-shadow: 0 0 5px rgba(255, 165, 0, 0.5); }
+    to { box-shadow: 0 0 15px rgba(255, 165, 0, 0.8); }
+}
+
+@keyframes fade {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
 }
 
 .view-graph-btn {
@@ -149,17 +242,43 @@ body {
     transition: all 0.3s ease;
     width: 100%;
     max-width: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+.view-graph-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.view-graph-btn:hover::before {
+    width: 100%;
+    height: 100%;
 }
 
 .view-graph-btn:hover {
     background-color: #45a049;
     transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
 }
 
 .view-graph-btn:disabled {
     background-color: #777;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
+}
+
+.view-graph-btn:disabled::before {
+    display: none;
 }
 
 /* Mensagem sem sensores */
@@ -171,12 +290,25 @@ body {
     background-color: #1e1e1e;
     border-radius: 10px;
     margin-top: 30px;
+    border: 2px dashed #333;
+    transition: all 0.3s ease;
+}
+
+.no-sensors-message.error {
+    border-color: #f44336;
+    background-color: #2e1a1a;
+    color: #FFB6C1;
 }
 
 .no-sensors-icon {
     font-size: 64px;
     margin-bottom: 20px;
     opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.no-sensors-message:hover .no-sensors-icon {
+    opacity: 0.8;
 }
 
 /* Tela de Gráfico */
@@ -188,6 +320,16 @@ body {
     padding: 20px;
     background-color: #1e1e1e;
     border-radius: 10px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.graph-header.connected {
+    border-color: #4CAF50;
+}
+
+.graph-header.disconnected {
+    border-color: #f44336;
 }
 
 .graph-title {
@@ -210,11 +352,32 @@ body {
     border-radius: 5px;
     transition: all 0.3s ease;
     font-size: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+.button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.button:hover::before {
+    width: 100%;
+    height: 100%;
 }
 
 .button:hover {
     background-color: #555;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .button.primary {
@@ -233,6 +396,11 @@ body {
     background-color: #da190b;
 }
 
+.button.active {
+    background-color: #2196F3;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
 .graph-container {
     width: 100%;
     height: 600px;
@@ -240,6 +408,15 @@ body {
     border: 1px solid #333;
     border-radius: 5px;
     background-color: #1a1a1a;
+    transition: border-color 0.3s ease;
+}
+
+.graph-container.connected {
+    border-color: #4CAF50;
+}
+
+.graph-container.error {
+    border-color: #f44336;
 }
 
 .loading {
@@ -248,6 +425,130 @@ body {
     text-align: center;
     padding: 20px;
     font-style: italic;
+    animation: pulse-text 2s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.loading.show {
+    display: block;
+}
+
+/* Indicadores de status em tempo real */
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse-dot 2s infinite;
+}
+
+.real-time-indicator.active {
+    background-color: #4CAF50;
+}
+
+.real-time-indicator.inactive {
+    background-color: #f44336;
+}
+
+.real-time-indicator.checking {
+    background-color: #FFA500;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* Tooltips para informações detalhadas */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 5px;
+    border-left: 4px solid #4CAF50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+.toast.error {
+    border-left-color: #f44336;
+}
+
+.toast.warning {
+    border-left-color: #FFA500;
+}
+
+/* Progress bars para feedback visual */
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #333;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar .progress {
+    height: 100%;
+    background-color: #4CAF50;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.progress-bar.checking .progress {
+    background: linear-gradient(90deg, #FFA500, #FFD700, #FFA500);
+    background-size: 200% 100%;
+    animation: progress-shine 2s linear infinite;
+    width: 100%;
+}
+
+@keyframes progress-shine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 /* Responsividade */
@@ -264,5 +565,14 @@ body {
 
     .graph-container {
         height: 400px;
+    }
+    
+    .graph-controls {
+        justify-content: center;
+    }
+    
+    .button {
+        flex: 1;
+        min-width: 80px;
     }
 }

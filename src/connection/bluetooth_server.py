@@ -6,6 +6,7 @@ import os
 import asyncio
 import bluetooth
 import json
+import time
 from src.sensors.sensor_factory import SensorFactory
 
 
@@ -77,6 +78,75 @@ class DeviceManager:
             dict: Dicionário com informações de todos os dispositivos
         """
         return cls.devices
+
+    @classmethod
+    def get_serializable_devices(cls):
+        """
+        Retorna versão serializável dos dispositivos (sem objetos de sensores)
+        
+        Returns:
+            dict: Dicionário com informações serializáveis dos dispositivos
+        """
+        serializable_devices = {}
+        current_time = time.time()
+        
+        for device_id, device_info in cls.devices.items():
+            # Processa informações dos sensores de forma serializável
+            sensor_summary = {}
+            
+            for sensor_type, sensor_obj in device_info.get("sensors", {}).items():
+                try:
+                    # Obtém dados do sensor
+                    data = sensor_obj.get_data()
+                    data_points = len(data.get("time", []))
+                    
+                    # Calcula se tem dados recentes
+                    has_recent_data = False
+                    time_since_update = None
+                    
+                    if data_points > 0 and data.get("time"):
+                        last_relative_time = data["time"][-1]
+                        sensor_start_time = getattr(sensor_obj, 'start_time', current_time)
+                        last_data_time = sensor_start_time + last_relative_time
+                        time_since_update = current_time - last_data_time
+                        has_recent_data = time_since_update < 5.0  # 5 segundos
+                    
+                    sensor_summary[sensor_type] = {
+                        "type": sensor_type,
+                        "data_points": data_points,
+                        "has_data": data_points > 0,
+                        "has_recent_data": has_recent_data,
+                        "time_since_update": time_since_update,
+                        "last_values": {
+                            "x": data.get("x", [None])[-1] if data.get("x") else None,
+                            "y": data.get("y", [None])[-1] if data.get("y") else None,
+                            "z": data.get("z", [None])[-1] if data.get("z") else None,
+                        } if data_points > 0 else None
+                    }
+                    
+                except Exception as e:
+                    Logger.log_message(f" Erro ao serializar sensor {sensor_type}: {e}")
+                    sensor_summary[sensor_type] = {
+                        "type": sensor_type,
+                        "data_points": 0,
+                        "has_data": False,
+                        "has_recent_data": False,
+                        "error": str(e)
+                    }
+            
+            # Conta sensores ativos
+            active_sensors = sum(1 for s in sensor_summary.values() if s.get("has_recent_data", False))
+            
+            serializable_devices[device_id] = {
+                "name": device_info["name"],
+                "connected_at": device_info["connected_at"],
+                "sensors": sensor_summary,
+                "sensor_count": len(sensor_summary),
+                "active_sensor_count": active_sensors,
+                "last_updated": current_time
+            }
+        
+        return serializable_devices
 
 
 class BluetoothConnection:
@@ -176,7 +246,7 @@ class BluetoothConnection:
                         
                         except json.JSONDecodeError:
                             # JSON inválido, ignora
-                            Logger.log_message(f" JSON inválido: {json_data[:50]}...")
+                            Logger.log_message(f"JSON inválido: {json_data[:50]}...")
                             continue
 
                 except Exception as e:
@@ -184,10 +254,9 @@ class BluetoothConnection:
                     break
 
         except Exception as e:
-            Logger.log_message(f"Erro crítico: {e}")
+            Logger.log_message(f"❌ Erro crítico ❌ : {e}")
         finally:
             try:
-                
                 socket.close()
                 # Remove o dispositivo quando desconecta
                 DeviceManager.unregister_device(device_id)
