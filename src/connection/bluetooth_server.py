@@ -84,7 +84,6 @@ class BluetoothConnection:
 
     def __init__(self):
         """Inicializa o gerenciador de conexões Bluetooth"""
-        self.max_message_size = int(os.getenv("MAX_MESSAGE_SIZE", 4096))
 
     async def recv_all(self, socket, length):
         """
@@ -114,6 +113,8 @@ class BluetoothConnection:
             device_id (str): ID do dispositivo
         """
         device_name = "Unknown"
+        buffer = b""
+        
         try:
             device_name = bluetooth.lookup_name(socket.getpeername()[0]) or "Unknown"
             DeviceManager.register_device(device_id, device_name)
@@ -135,64 +136,81 @@ class BluetoothConnection:
 
             while True:
                 try:
-                    # Recebe o tamanho da mensagem (4 bytes)
-                    length_bytes = await self.recv_all(socket, 4)
-                    if not length_bytes or len(length_bytes) != 4:
-                        Logger.log_message("Erro: Tamanho da mensagem inválido.")
+                    # Lê dados em chunks
+                    data = await asyncio.to_thread(socket.recv, 1024)
+                    if not data:
                         break
+                    
+                    buffer += data
+                    
+                    # Processa todos os JSONs completos no buffer
+                    while True:
+                        # Procura início de JSON
+                        start = buffer.find(b'{"type":')
+                        if start == -1:
+                            # Não achou início, mantém só os últimos 100 bytes
+                            buffer = buffer[-100:] if len(buffer) > 100 else b""
+                            break
+                        
+                        # Remove lixo antes do JSON
+                        if start > 0:
+                            buffer = buffer[start:]
+                            start = 0
+                        
+                        # Procura fim do JSON (fecha chave)
+                        brace_count = 0
+                        end = -1
+                        
+                        for i in range(len(buffer)):
+                            if buffer[i:i+1] == b'{':
+                                brace_count += 1
+                            elif buffer[i:i+1] == b'}':
+                                brace_count -= 1
+                                if brace_count == 0:
+                                    end = i + 1
+                                    break
+                        
+                        if end == -1:
+                            # JSON incompleto, aguarda mais dados
+                            break
+                        
+                        # Extrai JSON completo
+                        json_data = buffer[:end]
+                        buffer = buffer[end:]
+                        
+                        # Tenta processar
+                        try:
+                            message = json.loads(json_data.decode('utf-8'))
+                            if isinstance(message, dict) and "type" in message:
+                                
+                                sensor_type = message.get("type")
+                                Logger.log_message(f"Dados recebidos {device_name}: {sensor_type}")
+                                
+                                if sensor_type == "accelerometer":
+                                    if accel_sensor.process_data(message):
+                                        accel_sensor.save_to_file(message, device_name, device_id)
+                                elif sensor_type == "gyroscope":
+                                    if gyro_sensor.process_data(message):
+                                        gyro_sensor.save_to_file(message, device_name, device_id)
+                        
+                        except json.JSONDecodeError:
+                            # JSON inválido, ignora
+                            Logger.log_message(f" JSON inválido: {json_data[:50]}...")
+                            continue
 
-                    # Converte para inteiro
-                    length = int.from_bytes(length_bytes, byteorder="big")
-                    if length <= 0 or length > self.max_message_size:
-                        Logger.log_message(
-                            f"Erro: Tamanho da mensagem fora do limite: {length} bytes"
-                        )
-                        continue
-
-                    # Recebe a mensagem completa
-                    message_bytes = await self.recv_all(socket, length)
-                    if not message_bytes or len(message_bytes) != length:
-                        Logger.log_message("Erro: Mensagem incompleta ou corrompida.")
-                        break
-
-                    # Decodifica a mensagem JSON
-                    try:
-                        message = json.loads(message_bytes.decode("utf-8"))
-                        if not isinstance(message, dict):
-                            raise ValueError("Mensagem não é um JSON válido")
-                    except (json.JSONDecodeError, ValueError) as e:
-                        Logger.log_message(f"Erro ao decodificar mensagem: {e}")
-                        continue
-
-                    Logger.log_message(f"Dados recebidos de {device_name}: {message}")
-
-                    # Processa e salva os dados com base no tipo do sensor
-                    sensor_type = message.get("type")
-
-                    if sensor_type == "accelerometer" and accel_sensor.process_data(message):
-                        accel_sensor.save_to_file(message, device_name, device_id)
-                    elif sensor_type == "gyroscope" and gyro_sensor.process_data(message):
-                        gyro_sensor.save_to_file(message, device_name, device_id)
-                    else:
-                        Logger.log_message(f"Tipo de sensor desconhecido ou dados inválidos: {sensor_type}")
-
-                except (asyncio.TimeoutError, bluetooth.btcommon.BluetoothError) as e:
-                    Logger.log_message(f"Erro na conexão: {e}")
-                    break
                 except Exception as e:
-                    Logger.log_message(f"Erro inesperado: {e}")
+                    Logger.log_message(f"Erro no loop: {e}")
                     break
 
         except Exception as e:
             Logger.log_message(f"Erro crítico: {e}")
         finally:
             try:
+                
                 socket.close()
                 # Remove o dispositivo quando desconecta
                 DeviceManager.unregister_device(device_id)
-                Logger.log_message(
-                    f"Conexão com {device_name} (ID: {device_id}) encerrada."
-                )
+                Logger.log_message(f"Conexão com {device_name} encerrada.")
             except:
                 pass
 
