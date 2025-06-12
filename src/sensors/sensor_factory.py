@@ -23,5 +23,8 @@ class SensorFactory:
         elif sensor_type == "gyroscope":
             from src.sensors.gyroscope import Gyroscope
             return Gyroscope(device_id, max_data_points)
+        elif sensor_type == "magnetometer":
+            from src.sensors.magnetometer import Magnetometer
+            return Magnetometer(device_id, max_data_points)
         else:
             raise ValueError(f"Tipo de sensor não suportado: {sensor_type}")
