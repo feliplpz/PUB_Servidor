@@ -69,8 +69,30 @@
                             </button>
                         </div>
                         {% endif %}
+                        
+                        <!-- Card do Magnetômetro -->
+                            {% if 'magnetometer' in device.sensors %}
+                            <div class="sensor-card" id="card-magnetometer">
+                                <div class="sensor-icon">[MAG]</div>
+                                <div class="sensor-name">Magnetômetro</div>
+                                <div class="sensor-description">
+                                    Mede campo magnético nos eixos X, Y e Z em μT
+                                </div>
+                                <div id="status-magnetometer" class="sensor-status inactive">
+                                    Verificando...
+                                </div>
+                                <button 
+                                    class="view-graph-btn" 
+                                    id="btn-magnetometer"
+                                    onclick="showGraph('magnetometer')"
+                                    disabled>
+                                    Ver Gráfico
+                                </button>
+                            </div>
+                            {% endif %}
                     {% endif %}
                 </div>
+
 
                 <!-- Mensagem quando nenhum sensor está ativo -->
                 <div id="no-sensors-message" class="no-sensors-message" style="display: none;">

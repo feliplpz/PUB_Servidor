@@ -450,7 +450,8 @@ class BluetoothConnection:
         
         sensors = {
             "accelerometer": SensorFactory.create_sensor("accelerometer", device_id, max_data_points),
-            "gyroscope": SensorFactory.create_sensor("gyroscope", device_id, max_data_points)
+            "gyroscope": SensorFactory.create_sensor("gyroscope", device_id, max_data_points),
+            "magnetometer": SensorFactory.create_sensor("magnetometer", device_id, max_data_points)
         }
         
         Logger.log_message(f"Sensores inicializados para {device_id}: {list(sensors.keys())}")

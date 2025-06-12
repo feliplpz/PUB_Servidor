@@ -10,6 +10,10 @@ if (!availableSensors || availableSensors.length === 0) {
     if (document.getElementById('card-gyroscope')) {
         availableSensors.push('gyroscope');
     }
+        if (document.getElementById('card-magnetometer')) {
+        availableSensors.push('magnetometer');
+    }
+
 }
 
 // Estado da aplicação
@@ -49,8 +53,17 @@ const sensorConfigs = {
         axisLabels: ['Giroscópio X', 'Giroscópio Y', 'Giroscópio Z'],
         unit: '(rad/s)',
         containerId: 'current-graph'
+    },
+    magnetometer: {
+        title: 'Magnetômetro - Campo Magnético',
+        yAxisTitle: 'Campo Magnético (μT)',
+        colors: ['#ff6b6b', '#4ecdc4', '#45b7d1'],
+        axisLabels: ['Magnético X', 'Magnético Y', 'Magnético Z'],
+        unit: '(μT)',
+        containerId: 'current-graph'
     }
 };
+
 
 /**
  * Inicializa a aplicação
@@ -59,7 +72,7 @@ function initializeApp() {
     console.log('Inicializando aplicação de sensores...');
     
     if (availableSensors.length === 0) {
-        availableSensors = ['accelerometer', 'gyroscope'];
+        availableSensors = ['accelerometer', 'gyroscope', 'magnetometer'];
     }
     
     // Inicializa estado dos sensores
