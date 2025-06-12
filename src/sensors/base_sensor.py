@@ -3,10 +3,15 @@ from src.utils.logging import Logger
 from abc import ABC, abstractmethod
 import os
 
+# Constantes para tipos de sensores
 ACCELEROMETER = "accelerometer"
-GYROSCOPE = "gyroscope"
+GYROSCOPE = "gyroscope" 
+MAGNETOMETER = "magnetometer"
+
+# Constantes para formatação de arquivos
 DIVIDER = "_"
 EXTENSION = ".csv"
+
 class Sensor(ABC):
     """Classe abstrata para sensores"""
 
@@ -20,16 +25,16 @@ class Sensor(ABC):
         self.device_id = device_id
         self.max_data_points = max_data_points
         self.data_lock = Lock()
+        
+        # Configuração de timestamp
         env_value = os.getenv('DATE_IN_MILLISECONDS')
         if env_value is not None and env_value not in ('True', 'False'):
             Logger.log_message(
                 f"ERRO: Formato inválido para DATE_IN_MILLISECONDS: '{env_value}'. "
                 f"O valor deve ser exatamente 'True' ou 'False'. Usando o padrão: False."
             )
-            # Define como False por segurança
             self.date_in_milliseconds = False
         else:
-            # Define o valor correto
             self.date_in_milliseconds = (env_value == 'True')
             Logger.log_message(f"Configuração: DATE_IN_MILLISECONDS={self.date_in_milliseconds}")
         
@@ -68,5 +73,6 @@ class Sensor(ABC):
         Args:
             data (dict): Dados a serem salvos
             device_name (str): Nome do dispositivo
+            device_id (str): ID do dispositivo
         """
         pass
