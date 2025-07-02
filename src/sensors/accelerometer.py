@@ -42,6 +42,7 @@ class Accelerometer(Sensor):
                 self.data_y.append(accel_y)
                 self.data_z.append(accel_z)
 
+            print(f"Accelerometer: 📊 PUBLICANDO EVENTO: {self.device_id}: Dados: {self.get_data()}")
             # Publica os dados para quem estiver interessado
             EventBus.publish(
                 "sensor_update",

@@ -172,8 +172,8 @@ def register_routes(app, templates, websocket_manager):
                 "check_time": current_time
             }
         }
-        
-        print(f"Info para {device_id}: {active_sensors}/{total_sensors} sensores ativos")
+
+         # print(f"Info para {device_id}: {active_sensors}/{total_sensors} sensores ativos")
         return response_data
 
     @app.get("/api/device/{device_id}/status")
@@ -292,6 +292,7 @@ def register_routes(app, templates, websocket_manager):
             while True:
                 # Recebe mensagens do cliente (pode ser usado para heartbeat)
                 message = await websocket.receive_text()
+                print(f"websocket_endpoint: 📨 MENSAGEM RECEBIDA: {message}")
                 if message == "ping":
                     await websocket.send_text("pong")
         except WebSocketDisconnect:
@@ -308,6 +309,7 @@ def register_routes(app, templates, websocket_manager):
             while True:
                 # Recebe mensagens do cliente
                 message = await websocket.receive_text()
+                print(f"device_list_websocket: 📨 MENSAGEM RECEBIDA: {message}")
                 
                 # Suporte a comandos especiais
                 if message == "ping":
@@ -325,6 +327,8 @@ def register_routes(app, templates, websocket_manager):
                     except json.JSONDecodeError:
                         pass
                         
-        except WebSocketDisconnect:
-            print("WebSocket da lista de dispositivos desconectado")
+        except WebSocketDisconnect as web_socket_disconnect_err:
+            print(f"WebSocket da lista de dispositivos desconectado: {web_socket_disconnect_err}")
             websocket_manager.disconnect_device_list(websocket)
+        except Exception as err:
+            print(f"Exceção ocorreu em device_list_websocket: {err}")

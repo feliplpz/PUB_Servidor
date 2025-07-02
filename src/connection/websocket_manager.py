@@ -46,6 +46,7 @@ class WebSocketManager:
             sensor_type (str): Tipo de sensor
         """
         await websocket.accept()
+        # print(f"✅ WEBSOCKET ACEITO: {device_id}_{sensor_type}")
         
         client_key = f"{device_id}_{sensor_type}"
         if client_key not in self.active_connections:

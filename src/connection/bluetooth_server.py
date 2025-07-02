@@ -44,7 +44,7 @@ class DeviceManager:
                 "sensors": {},
             }
             Logger.log_message(f"Dispositivo registrado: {device_name} ({device_id})")
-            
+
             # Publica evento de dispositivo conectado
             EventBus.publish("device_connected", {
                 "device_id": device_id,
@@ -419,11 +419,11 @@ class BluetoothConnection:
                         buffer = self.message_parser.cleanup_buffer(buffer)
                         Logger.log_message(f"Buffer limpo: {old_size} -> {len(buffer)} bytes")
                     
-                except asyncio.TimeoutError:
-                    Logger.log_message(f"Timeout na conexão com {device_name}")
+                except asyncio.TimeoutError as timeout_err:
+                    Logger.log_message(f"Timeout na conexão com {device_name}. Erro: {timeout_err}")
                     break
-                except bluetooth.btcommon.BluetoothError as e:
-                    Logger.log_message(f"Erro Bluetooth com {device_name}: {e}")
+                except bluetooth.btcommon.BluetoothError as bluetooth_err:
+                    Logger.log_message(f"Erro Bluetooth com {device_name}: {bluetooth_err}")
                     break
                 except Exception as e:
                     error_count += 1
