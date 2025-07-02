@@ -26,6 +26,9 @@ let lastCheckTime = null;
 let consecutiveErrors = 0;
 let isCheckingStatus = false;
 
+// WebSockets de monitoramento para cada sensor
+let monitoringWebSockets = {};
+
 // Configurações reativas
 const CONFIG = {
     CHECK_INTERVAL: 500,       
@@ -88,159 +91,141 @@ function initializeApp() {
         };
         console.log(`${sensor}: inicializado`);
     });
-    
     setupEventListeners();
+    createMonitoringWebSockets();
     startSensorStatusCheck();
+
     
     // Primeira verificação imediata
     setTimeout(() => {
-        console.log('⚡ Executando verificação inicial...');
+        // console.log('⚡ Executando verificação inicial...');
         checkSensorStates();
     }, 100);
 }
 
 /**
- * Verifica estado atual dos sensores com lógica melhorada
+ * Verifica estado atual dos sensores com fallback para WebSockets)
  */
 async function checkSensorStates() {
     if (isCheckingStatus) {
-        console.log(' Verificação já em andamento, pulando...');
         return;
     }
-    
+
     isCheckingStatus = true;
     lastCheckTime = Date.now();
-    
-    // Atualiza indicador visual de verificação
-    updateCheckingIndicator(true);
-    
+
     try {
-        console.log(`🔍 Verificando sensores... (tentativa ${consecutiveErrors + 1})`);
-        
+        // Primeiro, verifica se temos dados recentes dos WebSockets
+        let hasRecentWebSocketData = false;
+        let activeSensorCount = 0;
+
+        availableSensors.forEach(sensorType => {
+            const wsData = monitoringWebSockets[sensorType];
+            const sensorState = sensorStates[sensorType];
+
+            if (wsData && wsData.isConnected && wsData.lastDataTime) {
+                const timeSinceLastData = (Date.now() - wsData.lastDataTime) / 1000;
+
+                if (timeSinceLastData < CONFIG.RECENT_DATA_WINDOW) {
+                    hasRecentWebSocketData = true;
+                    // Mantém estado ativo se dados são recentes
+                    if (!sensorState.active) {
+                        updateSensorState(sensorType, true, sensorState.dataPoints, {
+                            timeSinceUpdate: timeSinceLastData,
+                            isRecent: true,
+                            source: 'websocket_fallback'
+                        });
+                    }
+                    activeSensorCount++;
+                } else {
+                    // Marca como inativo se dados são antigos
+                    updateSensorState(sensorType, false, sensorState.dataPoints, {
+                        timeSinceUpdate: timeSinceLastData,
+                        isRecent: false,
+                        source: 'websocket_timeout'
+                    });
+                }
+            }
+        });
+
+        // Se não há dados recentes do WebSocket, faz verificação HTTP como fallback
+        if (!hasRecentWebSocketData) {
+            console.log('📡 Sem dados recentes do WebSocket, usando fallback HTTP...');
+            await checkSensorStatesHTTP();
+            return;
+        }
+
+        // Reset contador de erros se WebSocket está funcionando
+        consecutiveErrors = 0;
+        updateOverallStatus(activeSensorCount > 0, activeSensorCount);
+
+    } catch (error) {
+        console.error('❌ Erro na verificação de sensores:', error);
+        // Em caso de erro, tenta HTTP como fallback
+        await checkSensorStatesHTTP();
+    } finally {
+        isCheckingStatus = false;
+        scheduleNextCheck();
+    }
+}
+
+/**
+ * NOVA FUNÇÃO: Verificação HTTP como fallback
+ */
+async function checkSensorStatesHTTP() {
+    try {
+        console.log('🌐 Verificação HTTP de sensores...');
+
         const response = await fetch(`/api/device/${device_id}/info`);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const deviceInfo = await response.json();
-        
-        // Reset contador de erros em caso de sucesso
         consecutiveErrors = 0;
-        
-        // Atualiza lista de sensores disponíveis se necessário
-        if (availableSensors.length === 0 && deviceInfo.sensors) {
-            const apiSensors = Object.keys(deviceInfo.sensors);
-            availableSensors.splice(0, 0, ...apiSensors);
-            console.log(' Sensores detectados:', availableSensors);
-        }
-        
+
         let hasActiveSensors = false;
         let activeSensorCount = 0;
-        
-        // Processa cada sensor
+
         availableSensors.forEach(sensorType => {
             const sensorInfo = deviceInfo.sensors[sensorType];
-            const previousState = sensorStates[sensorType];
-            
+
             if (!sensorInfo) {
-                console.warn(`Sensor ${sensorType} não encontrado na resposta`);
                 updateSensorState(sensorType, false, 0);
                 return;
             }
-            
-            // Lógica de detecção melhorada
+
             const hasData = sensorInfo.has_data || false;
             const dataPoints = sensorInfo.data_points || 0;
             const timeSinceUpdate = sensorInfo.time_since_last_update;
-            
-            // Considera ativo se:
-            // 1. Tem dados E
-            // 2. Foi atualizado recentemente (últimos 4 segundos)
-            const isCurrentlyActive = hasData && 
-                                    timeSinceUpdate !== null && 
+            const isCurrentlyActive = hasData &&
+                                    timeSinceUpdate !== null &&
                                     timeSinceUpdate < CONFIG.RECENT_DATA_WINDOW;
-            
-            // Lógica de transição para evitar flicker
-            let finalActiveState = isCurrentlyActive;
-            
-            if (!isCurrentlyActive && previousState.active) {
-                // Sensor pode estar transitioning de ativo para inativo
-                if (!previousState.isTransitioning) {
-                    console.log(`${sensorType}: Iniciando transição para inativo`);
-                    sensorStates[sensorType].isTransitioning = true;
-                    sensorStates[sensorType].transitionStartTime = Date.now();
-                    finalActiveState = true; // Mantém ativo durante transição
-                } else {
-                    // Verifica se tempo de transição passou
-                    const transitionTime = Date.now() - previousState.transitionStartTime;
-                    if (transitionTime > CONFIG.STATUS_TRANSITION_DELAY) {
-                        console.log(`${sensorType}: Transição completa, sensor inativo`);
-                        finalActiveState = false;
-                        sensorStates[sensorType].isTransitioning = false;
-                    } else {
-                        console.log(` ${sensorType}: Ainda em transição (${transitionTime}ms)`);
-                        finalActiveState = true; // Ainda em transição
-                    }
-                }
-            } else if (isCurrentlyActive && previousState.isTransitioning) {
-                // Sensor voltou a ficar ativo durante transição
-                console.log(`✅ ${sensorType}: Voltou a ficar ativo, cancelando transição`);
-                sensorStates[sensorType].isTransitioning = false;
-                finalActiveState = true;
-            } else if (isCurrentlyActive) {
-                // Sensor ativo normalmente
-                sensorStates[sensorType].isTransitioning = false;
-                if (previousState.lastActiveTime === null || !previousState.active) {
-                    console.log(`${sensorType}: Sensor ativado`);
-                }
-                sensorStates[sensorType].lastActiveTime = Date.now();
-            }
-            
-            updateSensorState(sensorType, finalActiveState, dataPoints, {
+
+            updateSensorState(sensorType, isCurrentlyActive, dataPoints, {
                 timeSinceUpdate,
-                debugInfo: sensorInfo.debug_info,
-                isRecent: sensorInfo.is_recent
+                isRecent: sensorInfo.is_recent,
+                source: 'http'
             });
-            
-            if (finalActiveState) {
+
+            if (isCurrentlyActive) {
                 hasActiveSensors = true;
                 activeSensorCount++;
             }
         });
-        
-        // Atualiza status geral
+
         updateOverallStatus(hasActiveSensors, activeSensorCount);
-        
-        // Verifica se o sensor atual foi desligado
-        if (currentScreen === 'graph' && currentSensor) {
-            const currentSensorState = sensorStates[currentSensor];
-            if (!currentSensorState || !currentSensorState.active) {
-                console.log(`Sensor atual (${currentSensor}) foi desligado, retornando à seleção`);
-                returnToSelection();
-            }
-        }
-        
-        console.log(`✅ Verificação concluída: ${activeSensorCount}/${availableSensors.length} sensores ativos`);
-        
+
     } catch (error) {
         consecutiveErrors++;
-        console.error(` Erro na verificação ${consecutiveErrors}:`, error);
-        
-        // Em caso de erro, marca todos como inativos após algumas tentativas
+        console.error(`❌ Erro na verificação HTTP ${consecutiveErrors}:`, error);
+
         if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
-            console.warn('🚫 Múltiplos erros detectados, marcando sensores como inativos');
             availableSensors.forEach(sensorType => {
                 updateSensorState(sensorType, false, 0, { error: error.message });
             });
             updateOverallStatus(false, 0);
         }
-        
-    } finally {
-        isCheckingStatus = false;
-        updateCheckingIndicator(false);
-        
-        // Reagenda próxima verificação com backoff em caso de erro
-        scheduleNextCheck();
     }
 }
 
@@ -360,11 +345,12 @@ function updateOverallStatus(hasActiveSensors, activeSensorCount = 0) {
     const totalSensors = availableSensors.length;
     const timeSinceLastCheck = lastCheckTime ? 
                              `${Math.round((Date.now() - lastCheckTime) / 1000)}s` : 'N/A';
-    
+    const connectedWS = Object.values(monitoringWebSockets).filter(ws => ws.isConnected).length;
+
     if (hasActiveSensors) {
         statusElement.innerHTML = `
             <strong>${activeSensorCount}/${totalSensors} sensores ativos</strong><br>
-            <small>Última verificação: ${timeSinceLastCheck} | Selecione um sensor para visualizar</small>
+            <small>WebSockets: ${connectedWS}/${totalSensors} | Última verificação: ${timeSinceLastCheck}</small>
         `;
         
         if (noSensorsMessage) {
@@ -379,7 +365,7 @@ function updateOverallStatus(hasActiveSensors, activeSensorCount = 0) {
         
         statusElement.innerHTML = `
             <strong>Nenhum sensor ativo${errorInfo}</strong><br>
-            <small>Última verificação: ${timeSinceLastCheck} | Ative sensores no app móvel</small>
+            <small>WebSockets: ${connectedWS}/${totalSensors} | Última verificação: ${timeSinceLastCheck}</small>
         `;
         
         if (noSensorsMessage && totalSensors > 0) {
@@ -408,7 +394,7 @@ function scheduleNextCheck() {
         );
     }
     
-    console.log(`Próxima verificação em ${interval}ms (erros: ${consecutiveErrors})`);
+    // console.log(`Próxima verificação em ${interval}ms (erros: ${consecutiveErrors})`);
     
     statusCheckInterval = setTimeout(() => {
         checkSensorStates();
@@ -420,44 +406,44 @@ function scheduleNextCheck() {
  */
 function showGraph(sensorType) {
     const sensorState = sensorStates[sensorType];
-    
+
     if (!sensorState || !sensorState.active) {
         alert(`O sensor ${sensorType} não está ativo no momento.\n\nPor favor, ative-o no aplicativo móvel.`);
         return;
     }
-    
-    console.log(`Mostrando gráfico para: ${sensorType}`);
-    
+
+    console.log(`📊 Mostrando gráfico para: ${sensorType}`);
+
     // Limpa gráfico anterior se existir
     if (currentGraph) {
         currentGraph.disconnect();
         currentGraph = null;
     }
-    
+
     // Atualiza estado
     currentScreen = 'graph';
     currentSensor = sensorType;
-    
+
     // Alterna telas
     const selectionScreen = document.getElementById('selection-screen');
     const graphScreen = document.getElementById('graph-screen');
-    
+
     if (selectionScreen) selectionScreen.classList.add('hidden');
     if (graphScreen) graphScreen.classList.add('active');
-    
+
     // Atualiza título do gráfico
     const titleElement = document.getElementById('current-graph-title');
     const statusElement = document.getElementById('current-graph-status');
-    
+
     if (titleElement && sensorConfigs[sensorType]) {
         titleElement.textContent = sensorConfigs[sensorType].title;
     }
-    
+
     if (statusElement) {
         statusElement.className = 'sensor-status active';
-        statusElement.textContent = '🔗 Conectando...';
+        statusElement.textContent = '🔗 Conectando ao gráfico...';
     }
-    
+
     // Cria nova instância do gráfico
     if (sensorConfigs[sensorType]) {
         const config = {
@@ -465,17 +451,17 @@ function showGraph(sensorType) {
             sensorType: sensorType,
             ...sensorConfigs[sensorType]
         };
-        
+
         currentGraph = new SensorGraph(config);
-        
+
         // Atualiza status quando gráfico conectar
         setTimeout(() => {
             if (statusElement && currentGraph && currentGraph.isConnected) {
-                statusElement.textContent = '✅ Conectado ao WebSocket';
+                statusElement.textContent = '✅ Conectado ao WebSocket do gráfico';
             }
         }, 1000);
     }
-    
+
     // Configura event listeners para controles do gráfico
     setupGraphControls();
 }
@@ -558,13 +544,23 @@ function setupEventListeners() {
         if (statusCheckInterval) {
             clearTimeout(statusCheckInterval);
         }
+        disconnectMonitoringWebSockets();
     });
     
     // Re-verificar quando volta para a página
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            console.log('👁️ Página voltou ao foco, verificando sensores...');
             consecutiveErrors = 0; // Reset erros
+
+            // Reconecta WebSockets de monitoramento se necessário
+            availableSensors.forEach(sensorType => {
+                const wsData = monitoringWebSockets[sensorType];
+                if (!wsData || !wsData.isConnected) {
+                    console.log(`🔄 Reconectando WebSocket de monitoramento: ${sensorType}`);
+                    createSensorMonitoringWebSocket(sensorType);
+                }
+            });
+
             setTimeout(checkSensorStates, 500);
         }
     });
@@ -574,8 +570,113 @@ function setupEventListeners() {
  * Inicia verificação periódica do status dos sensores
  */
 function startSensorStatusCheck() {
-    console.log(`Iniciando verificação periódica (${CONFIG.CHECK_INTERVAL}ms)`);
+    // console.log(`Iniciando verificação periódica (${CONFIG.CHECK_INTERVAL}ms)`);
     scheduleNextCheck();
+}
+
+/**
+ * Cria WebSockets de monitoramento para todos os sensores
+ */
+function createMonitoringWebSockets() {
+    console.log('🔌 Criando WebSockets de monitoramento para sensores:', availableSensors);
+
+    availableSensors.forEach(sensorType => {
+        createSensorMonitoringWebSocket(sensorType);
+    });
+}
+
+/**
+ * Cria WebSocket de monitoramento para um sensor específico
+ */
+function createSensorMonitoringWebSocket(sensorType) {
+    if (monitoringWebSockets[sensorType]) {
+        console.log(`⚠️ WebSocket de monitoramento para ${sensorType} já existe`);
+        return;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/device/${device_id}/sensor/${sensorType}`;
+
+    console.log(`🔗 Conectando WebSocket de monitoramento: ${sensorType}`);
+
+    try {
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log(`✅ WebSocket de monitoramento conectado: ${sensorType}`);
+            monitoringWebSockets[sensorType] = {
+                websocket: ws,
+                isConnected: true,
+                lastDataTime: null
+            };
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+
+                if (message.type === 'historical' || message.type === 'update') {
+                    const dataPoints = message.data ? (message.data.time ? message.data.time.length : 0) : 0;
+                    const hasData = dataPoints > 0;
+
+                    // Atualiza timestamp da última mensagem
+                    monitoringWebSockets[sensorType].lastDataTime = Date.now();
+
+                    // Atualiza estado do sensor com base nos dados recebidos
+                    updateSensorState(sensorType, hasData, dataPoints, {
+                        timeSinceUpdate: 0, // Dados acabaram de chegar
+                        isRecent: true,
+                        source: 'websocket'
+                    });
+                }
+            } catch (error) {
+                console.error(`❌ Erro ao processar dados WebSocket de ${sensorType}:`, error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error(`❌ Erro WebSocket de monitoramento ${sensorType}:`, error);
+            if (monitoringWebSockets[sensorType]) {
+                monitoringWebSockets[sensorType].isConnected = false;
+            }
+        };
+
+        ws.onclose = (event) => {
+            console.log(`🔌 WebSocket de monitoramento ${sensorType} desconectado:`, event.code);
+
+            if (monitoringWebSockets[sensorType]) {
+                monitoringWebSockets[sensorType].isConnected = false;
+
+                // Reconecta automaticamente se não foi fechado intencionalmente
+                if (event.code !== 1000) {
+                    setTimeout(() => {
+                        console.log(`🔄 Reconectando WebSocket de monitoramento: ${sensorType}`);
+                        createSensorMonitoringWebSocket(sensorType);
+                    }, 2000);
+                }
+            }
+        };
+
+    } catch (error) {
+        console.error(`❌ Erro ao criar WebSocket de monitoramento para ${sensorType}:`, error);
+    }
+}
+
+/**
+ * Limpa todos os WebSockets de monitoramento
+ */
+function disconnectMonitoringWebSockets() {
+    console.log('🔌 Desconectando WebSockets de monitoramento...');
+
+    Object.keys(monitoringWebSockets).forEach(sensorType => {
+        const wsData = monitoringWebSockets[sensorType];
+        if (wsData && wsData.websocket) {
+            wsData.websocket.close(1000, 'Limpeza de recursos');
+        }
+    });
+
+    monitoringWebSockets = {};
 }
 
 // Funções globais para serem chamadas pelo HTML
@@ -585,15 +686,16 @@ window.reconnectCurrentGraph = reconnectCurrentGraph;
 
 // Debug - expõe funções para console
 window.sensorStates = sensorStates;
+window.monitoringWebSockets = monitoringWebSockets;
 window.checkSensorStates = checkSensorStates;
 window.CONFIG = CONFIG;
 
 // Função de debug para testar estados
 window.debugSensorStates = function() {
     console.table(sensorStates);
+    console.log('WebSockets de Monitoramento:', monitoringWebSockets);
     console.log('Configuração:', CONFIG);
     console.log('Últimos erros:', consecutiveErrors);
-    console.log('Próxima verificação em:', statusCheckInterval ? 'agendada' : 'não agendada');
 };
 
 // Inicialização quando o DOM estiver pronto
