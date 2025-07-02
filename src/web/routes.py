@@ -144,7 +144,7 @@ def register_routes(app, templates, websocket_manager):
                 }
                 
             except Exception as e:
-                print(f"Erro ao processar sensor {sensor_type}: {e}")
+                Logger.log_message(f"Erro ao processar sensor {sensor_type}: {e}")
                 sensor_info[sensor_type] = {
                     "type": sensor_type,
                     "has_data": False,
@@ -173,7 +173,7 @@ def register_routes(app, templates, websocket_manager):
             }
         }
 
-         # print(f"Info para {device_id}: {active_sensors}/{total_sensors} sensores ativos")
+         # Logger.log_message(f"Info para {device_id}: {active_sensors}/{total_sensors} sensores ativos")
         return response_data
 
     @app.get("/api/device/{device_id}/status")
@@ -216,7 +216,7 @@ def register_routes(app, templates, websocket_manager):
                 }
                 
             except Exception as e:
-                print(f"Erro no status rápido {sensor_type}: {e}")
+                Logger.log_message(f"Erro no status rápido {sensor_type}: {e}")
                 sensor_status[sensor_type] = {
                     "active": False,
                     "data_points": 0,
@@ -285,38 +285,38 @@ def register_routes(app, templates, websocket_manager):
         
     @app.websocket("/ws/device/{device_id}/sensor/{sensor_type}")
     async def websocket_endpoint(websocket: WebSocket, device_id: str, sensor_type: str):
-        print(f"CONEXÃO WEBSOCKET: {device_id}_{sensor_type}") 
+        Logger.log_message(f"CONEXÃO WEBSOCKET: {device_id}_{sensor_type}")
         await websocket_manager.connect(websocket, device_id, sensor_type) 
         
         try:
             while True:
                 # Recebe mensagens do cliente (pode ser usado para heartbeat)
                 message = await websocket.receive_text()
-                print(f"websocket_endpoint: 📨 MENSAGEM RECEBIDA: {message}")
+                Logger.log_message(f"websocket_endpoint: 📨 MENSAGEM RECEBIDA: {message}")
                 if message == "ping":
                     await websocket.send_text("pong")
         except WebSocketDisconnect:
-            print(f" WEBSOCKET DESCONECTADO: {device_id}_{sensor_type}")
+            Logger.log_message(f" WEBSOCKET DESCONECTADO: {device_id}_{sensor_type}")
             websocket_manager.disconnect(websocket, device_id, sensor_type) 
 
     @app.websocket("/ws/devices")
     async def device_list_websocket(websocket: WebSocket):
         """WebSocket para atualizações da lista de dispositivos"""
-        print("CONEXÃO WEBSOCKET: lista de dispositivos")
+        Logger.log_message("CONEXÃO WEBSOCKET: lista de dispositivos")
         await websocket_manager.connect_device_list(websocket)
         
         try:
             while True:
                 # Recebe mensagens do cliente
                 message = await websocket.receive_text()
-                print(f"device_list_websocket: 📨 MENSAGEM RECEBIDA: {message}")
+                Logger.log_message(f"device_list_websocket: 📨 MENSAGEM RECEBIDA: {message}")
                 
                 # Suporte a comandos especiais
                 if message == "ping":
                     await websocket.send_text("pong")
                 elif message == "request_update":
                     # Cliente solicitou atualização manual
-                    print(" liente solicitou atualização manual da lista")
+                    Logger.log_message(" liente solicitou atualização manual da lista")
                     await websocket_manager.send_device_list_update(websocket)
                 elif message.startswith("{"):
                     # Tenta parsear como JSON para comandos mais complexos
@@ -328,7 +328,7 @@ def register_routes(app, templates, websocket_manager):
                         pass
                         
         except WebSocketDisconnect as web_socket_disconnect_err:
-            print(f"WebSocket da lista de dispositivos desconectado: {web_socket_disconnect_err}")
+            Logger.log_message(f"WebSocket da lista de dispositivos desconectado: {web_socket_disconnect_err}")
             websocket_manager.disconnect_device_list(websocket)
         except Exception as err:
-            print(f"Exceção ocorreu em device_list_websocket: {err}")
+            Logger.log_message(f"Exceção ocorreu em device_list_websocket: {err}")
