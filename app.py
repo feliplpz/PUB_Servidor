@@ -30,15 +30,14 @@ register_routes(app, templates, websocket_manager)
 
 async def main():
     bluetooth_server = BluetoothConnection()
-
     config = uvicorn.Config(app, host="0.0.0.0", port=5000)
     server = uvicorn.Server(config)
 
-    await asyncio.gather(
-        bluetooth_server.start_server(),
-        server.serve()
-    )
+    # Inicia Bluetooth em background
+    asyncio.create_task(bluetooth_server.start_server())
 
+    # Uvicorn roda sozinho e processa SIGINT
+    await server.serve()
 
 if __name__ == "__main__":
     try:

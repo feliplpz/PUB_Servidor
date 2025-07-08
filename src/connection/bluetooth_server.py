@@ -527,16 +527,22 @@ class BluetoothConnection:
         port = server_socket.getsockname()[1]
         Logger.log_message(f"Servidor Bluetooth ativo na porta {port}")
 
+        # Socket não-bloqueante
+        server_socket.setblocking(False)
+
         try:
             while True:
-                client_sock, address = await asyncio.to_thread(server_socket.accept)
-                device_id = DeviceManager.generate_device_id()
-                Logger.log_message(f"Nova conexão de {address} -> ID: {device_id}")
-                asyncio.create_task(self.handle_client(client_sock, device_id))
+                try:
+                    # Não usar to_thread, usar diretamente
+                    client_sock, address = server_socket.accept()
+                    device_id = DeviceManager.generate_device_id()
+                    Logger.log_message(f"Nova conexão de {address} -> ID: {device_id}")
+                    asyncio.create_task(self.handle_client(client_sock, device_id))
+                except (BlockingIOError, bluetooth.btcommon.BluetoothError):
+                    # Sem conexão pendente, sleep curto e volta
+                    await asyncio.sleep(0.1)
+                    continue
         except asyncio.CancelledError:
             Logger.log_message("Servidor Bluetooth cancelado")
-        except Exception as e:
-            Logger.log_message(f"Erro no servidor Bluetooth: {e}")
         finally:
             server_socket.close()
-            Logger.log_message("Servidor Bluetooth encerrado")
