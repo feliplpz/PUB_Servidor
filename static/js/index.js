@@ -36,7 +36,7 @@ function connectWebSocket() {
         websocket = new WebSocket(wsUrl);
 
         websocket.onopen = function(event) {
-            console.log('✅ WebSocket da lista de dispositivos conectado');
+            console.log('WebSocket da lista de dispositivos conectado');
             isConnected = true;
             reconnectAttempts = 0;
             loading.style.display = 'none';
@@ -61,7 +61,7 @@ function connectWebSocket() {
         websocket.onmessage = function(event) {
             try {
                 const message = JSON.parse(event.data);
-                console.log('📨 Mensagem recebida:', message);
+                console.log('Mensagem recebida:', message);
 
                 connectionStats.last_message = new Date();
                 connectionStats.message_count++;
@@ -84,7 +84,7 @@ function connectWebSocket() {
         };
 
         websocket.onclose = function(event) {
-            console.log('🔌 WebSocket desconectado:', event.code, event.reason);
+            console.log('WebSocket desconectado:', event.code, event.reason);
             isConnected = false;
             loading.style.display = 'none';
             status.innerHTML = '<span class="status-indicator"></span>Desconectado';
@@ -97,7 +97,7 @@ function connectWebSocket() {
                 connectionStats.reconnections++;
 
                 const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 10000);
-                console.log(`🔄 Tentando reconectar em ${delay}ms...`);
+                console.log(`tentando reconectar em ${delay}ms...`);
 
                 if (!reconnectInterval) {
                     reconnectInterval = setTimeout(() => {
@@ -106,14 +106,14 @@ function connectWebSocket() {
                     }, delay);
                 }
             } else if (reconnectAttempts >= maxReconnectAttempts) {
-                console.log('🚫 Máximo de tentativas de reconexão atingido. Ativando fallback polling.');
+                console.log(' Máximo de tentativas de reconexão atingido. Ativando fallback polling.');
                 updateDebugInfo('WebSocket falhou. Usando polling como fallback.');
                 startFallbackPolling();
             }
         };
 
     } catch (error) {
-        console.error('❌ Erro ao criar WebSocket:', error);
+        console.error(' Erro ao criar WebSocket:', error);
         isConnected = false;
         updateDebugInfo('Erro ao criar WebSocket');
         startFallbackPolling();
@@ -123,7 +123,7 @@ function connectWebSocket() {
 function startFallbackPolling() {
     if (fallbackPollingInterval) return;
 
-    console.log('🔄 Iniciando fallback polling...');
+    console.log('Iniciando fallback polling...');
     updateDebugInfo('Usando polling HTTP como fallback');
 
     fallbackPollingInterval = setInterval(async () => {
@@ -163,7 +163,7 @@ function updateDeviceList(devices) {
         if (!newDeviceIds.has(deviceId)) {
             const deviceElement = deviceList.querySelector(`[data-device-id="${deviceId}"]`);
             if (deviceElement) {
-                console.log(`🔻 Removendo dispositivo: ${deviceId}`);
+                console.log(`Removendo dispositivo: ${deviceId}`);
                 deviceElement.classList.add('removing');
                 setTimeout(() => {
                     if (deviceElement.parentNode) {
@@ -199,7 +199,7 @@ function updateDeviceList(devices) {
             let deviceElement = deviceList.querySelector(`[data-device-id="${deviceId}"]`);
 
             if (!deviceElement) {
-                console.log(`🔺 Adicionando novo dispositivo: ${device.name} (${deviceId})`);
+                console.log(`Adicionando novo dispositivo: ${device.name} (${deviceId})`);
 
                 deviceElement = document.createElement('li');
                 deviceElement.className = 'device-item new';
@@ -282,7 +282,7 @@ function updateDebugInfo(status) {
 }
 
 function manualRefresh() {
-    console.log('🔄 Atualização manual solicitada');
+    console.log('Atualização manual solicitada');
 
     if (isConnected && websocket) {
         websocket.send(JSON.stringify({ type: 'request_update' }));
@@ -309,7 +309,7 @@ function setupEventListeners() {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Inicializando aplicação...');
+    console.log(' Inicializando aplicação...');
     setupEventListeners();
     connectWebSocket();
 });

@@ -6,6 +6,7 @@
         <title>Dispositivo: {{ device.name }}</title>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <link rel="stylesheet" href="/static/css/styles.css">
+        <link rel="stylesheet" href="/static/css/device.css">
     </head>
     <body>
         <div class="container">
@@ -39,8 +40,8 @@
                             <div id="status-accelerometer" class="sensor-status inactive">
                                 Verificando...
                             </div>
-                            <button 
-                                class="view-graph-btn" 
+                            <button
+                                class="view-graph-btn"
                                 id="btn-accelerometer"
                                 onclick="showGraph('accelerometer')"
                                 disabled>
@@ -60,8 +61,8 @@
                             <div id="status-gyroscope" class="sensor-status inactive">
                                 Verificando...
                             </div>
-                            <button 
-                                class="view-graph-btn" 
+                            <button
+                                class="view-graph-btn"
                                 id="btn-gyroscope"
                                 onclick="showGraph('gyroscope')"
                                 disabled>
@@ -69,30 +70,29 @@
                             </button>
                         </div>
                         {% endif %}
-                        
+
                         <!-- Card do Magnetômetro -->
-                            {% if 'magnetometer' in device.sensors %}
-                            <div class="sensor-card" id="card-magnetometer">
-                                <div class="sensor-icon">[MAG]</div>
-                                <div class="sensor-name">Magnetômetro</div>
-                                <div class="sensor-description">
-                                    Mede campo magnético nos eixos X, Y e Z em μT
-                                </div>
-                                <div id="status-magnetometer" class="sensor-status inactive">
-                                    Verificando...
-                                </div>
-                                <button 
-                                    class="view-graph-btn" 
-                                    id="btn-magnetometer"
-                                    onclick="showGraph('magnetometer')"
-                                    disabled>
-                                    Ver Gráfico
-                                </button>
+                        {% if 'magnetometer' in device.sensors %}
+                        <div class="sensor-card" id="card-magnetometer">
+                            <div class="sensor-icon">[MAG]</div>
+                            <div class="sensor-name">Magnetômetro</div>
+                            <div class="sensor-description">
+                                Mede campo magnético nos eixos X, Y e Z em μT
                             </div>
-                            {% endif %}
+                            <div id="status-magnetometer" class="sensor-status inactive">
+                                Verificando...
+                            </div>
+                            <button
+                                class="view-graph-btn"
+                                id="btn-magnetometer"
+                                onclick="showGraph('magnetometer')"
+                                disabled>
+                                Ver Gráfico
+                            </button>
+                        </div>
+                        {% endif %}
                     {% endif %}
                 </div>
-
 
                 <!-- Mensagem quando nenhum sensor está ativo -->
                 <div id="no-sensors-message" class="no-sensors-message" style="display: none;">
@@ -121,14 +121,13 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div id="current-graph" class="graph-container"></div>
                 <div id="loading-current" class="loading">Carregando dados...</div>
             </div>
         </div>
 
-        <!-- Scripts -->
-        <!-- Dados JSON seguros para JavaScript -->
+        <!-- Dados JSON para JavaScript -->
         <script type="application/json" id="device-data">
             {
                 "device_id": "{{ device_id }}",
@@ -138,40 +137,30 @@
                 "sensor_count": {{ device.sensors | length }}
             }
         </script>
-        
-        <script>
-            const deviceDataElement = document.getElementById("device-data");  
 
+        <!-- Inicialização das variáveis globais -->
+        <script>
+            const deviceDataElement = document.getElementById("device-data");
             if (deviceDataElement) {
-                
                 try {
-                    // Configuração inicial - método seguro com JSON
                     const deviceData = JSON.parse(deviceDataElement.textContent);
-                    // Variáveis globais
                     window.DEVICE_ID = deviceData.device_id;
-                    window.DEVICE_NAME = deviceData.device_name;
                     window.AVAILABLE_SENSORS = deviceData.available_sensors;
+                    window.DEVICE_NAME = deviceData.device_name;
                     window.CONNECTED_AT = deviceData.connected_at;
-                    
-                    
                 } catch (e) {
                     console.error('Erro ao parsear JSON:', e);
-                    console.error(' Conteúdo que causou erro:', deviceDataElement.textContent);
-                    
-                    // Fallback manual
                     window.DEVICE_ID = "{{ device_id }}";
-                    window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope']; 
-                    
+                    window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope', 'magnetometer'];
                 }
             } else {
-                console.error('❌ Elemento device-data não encontrado!');
-                // Fallback manual
+                console.error('Elemento device-data não encontrado!');
                 window.DEVICE_ID = "{{ device_id }}";
-                window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope'];
+                window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope', 'magnetometer'];
             }
         </script>
-        
-        <!-- Carregar scripts -->
+
+        <!-- Scripts -->
         <script src="/static/js/graph.js"></script>
         <script src="/static/js/device.js"></script>
     </body>
