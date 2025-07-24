@@ -58,21 +58,14 @@ class Accelerometer(Sensor):
             Logger.log_message(f"Erro ao processar dados do acelerômetro: {e}")
             return False
 
-    def get_data(self):
-        """
-        Retorna os dados do acelerômetro
-
-        Returns:
-            dict: Dados de tempo e aceleração nos três eixos
-        """
+    def get_data(self, limit=100):
         with self.data_lock:
             return {
-                "time": list(self.data_t),
-                "x": list(self.data_x),
-                "y": list(self.data_y),
-                "z": list(self.data_z),
+                "time": list(self.data_t)[-limit:],
+                "x": list(self.data_x)[-limit:],
+                "y": list(self.data_y)[-limit:],
+                "z": list(self.data_z)[-limit:],
             }
-
     def save_to_file(self, data, device_name, device_id):
         """
         Salva os dados do acelerômetro em um arquivo CSV

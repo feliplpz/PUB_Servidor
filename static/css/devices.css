@@ -1,0 +1,372 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.back-link {
+    color: #64C4D2;
+    text-decoration: none;
+    margin-bottom: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: rgba(100, 196, 210, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(100, 196, 210, 0.2);
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    color: #1094AB;
+    background-color: rgba(100, 196, 210, 0.2);
+    transform: translateX(-2px);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.title {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #fff;
+    font-weight: 600;
+    background: linear-gradient(45deg, #64C4D2, #1094AB);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #bbb;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+.connection-status {
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 20px;
+    margin: 20px auto 0;
+    display: inline-block;
+    border: 1px solid;
+    font-weight: 500;
+}
+
+.connection-status.connected {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.connection-status.checking {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #FFC107;
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+.sensor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.sensor-card {
+    background: linear-gradient(145deg, #1e1e1e 0%, #252525 100%);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.sensor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #333, transparent);
+    transition: opacity 0.3s ease;
+}
+
+.sensor-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(100, 196, 210, 0.3);
+}
+
+.sensor-card:hover::before {
+    background: linear-gradient(90deg, transparent, #64C4D2, transparent);
+}
+
+.sensor-card.active {
+    background: linear-gradient(145deg, #1e3a1e 0%, #2d4a2d 100%);
+    border-color: #4CAF50;
+}
+
+.sensor-card.active::before {
+    background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+    opacity: 1;
+}
+
+.sensor-card.inactive {
+    background: linear-gradient(145deg, #3a1e1e 0%, #4a2d2d 100%);
+    border-color: #f44336;
+    opacity: 0.8;
+}
+
+.sensor-card.inactive::before {
+    background: linear-gradient(90deg, transparent, #f44336, transparent);
+    opacity: 0.7;
+}
+
+.sensor-card h3 {
+    margin: 0 0 12px 0;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.sensor-card p {
+    margin: 0 0 20px 0;
+    color: #bbb;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.sensor-status {
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: inline-block;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.sensor-status.active {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.sensor-status.inactive {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.view-btn {
+    background: linear-gradient(135deg, #1094AB 0%, #64C4D2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.view-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0d7a94 0%, #4ba8bb 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 148, 171, 0.3);
+}
+
+.view-btn:disabled {
+    background: linear-gradient(135deg, #333 0%, #444 100%);
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: #888;
+    background: linear-gradient(145deg, #1e1e1e 0%, #252525 100%);
+    border-radius: 16px;
+    border: 2px dashed #333;
+    margin-top: 40px;
+}
+
+.empty-state h3 {
+    margin-bottom: 16px;
+    color: #bbb;
+    font-size: 24px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.graph-screen {
+    display: none;
+}
+
+.graph-screen.active {
+    display: block !important;
+}
+
+.graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.graph-title {
+    font-size: 22px;
+    margin: 0;
+    color: #fff;
+    font-weight: 600;
+}
+
+.graph-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.button {
+    background: linear-gradient(135deg, #333 0%, #444 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.button:hover {
+    background: linear-gradient(135deg, #444 0%, #555 100%);
+    transform: translateY(-1px);
+}
+
+.button.primary {
+    background: linear-gradient(135deg, #1094AB 0%, #64C4D2 100%);
+    border-color: rgba(100, 196, 210, 0.3);
+}
+
+.button.primary:hover {
+    background: linear-gradient(135deg, #0d7a94 0%, #4ba8bb 100%);
+    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.3);
+}
+
+.button.danger {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.button.danger:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.graph-container {
+    background: linear-gradient(145deg, #1e1e1e 0%, #252525 100%);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 600px;
+    height: 600px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#current-graph {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+}
+
+.loading {
+    text-align: center;
+    color: #aaa;
+    padding: 40px;
+    display: none;
+    font-size: 16px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .header {
+        padding: 24px 16px;
+        margin-bottom: 30px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .sensor-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .sensor-card {
+        padding: 20px;
+    }
+
+    .graph-header {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .graph-controls {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .graph-container {
+        padding: 16px;
+        height: 500px;
+        min-height: 500px;
+    }
+}

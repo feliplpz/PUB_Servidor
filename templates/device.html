@@ -3,10 +3,10 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Dispositivo: {{ device.name }}</title>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        <link rel="stylesheet" href="/static/css/styles.css">
-        <link rel="stylesheet" href="/static/css/device.css">
+        <title>{{ device.name }} - Sensores</title>
+        <script src="https://cdn.plot.ly/plotly-2.18.0.min.js"></script>
+        <link rel="stylesheet" href="/static/css/devices.css">
+
     </head>
     <body>
         <div class="container">
@@ -18,75 +18,53 @@
                 <div class="subtitle">Conectado em: {{ device.connected_at }}</div>
             </div>
 
-            <!-- Tela de Seleção de Gráficos -->
-            <div id="selection-screen" class="selection-screen">
-                <div class="status-panel">
-                    <div id="connection-status" class="connection-status">
-                        Verificando sensores ativos...
-                    </div>
-                </div>
-
-                <!-- Grid de Sensores -->
+            <!-- Tela de Seleção -->
+            <div id="selection-screen">
                 <div id="sensor-grid" class="sensor-grid">
                     {% if device.sensors %}
-                        <!-- Card do Acelerômetro -->
+                        <!-- Acelerômetro -->
                         {% if 'accelerometer' in device.sensors %}
                         <div class="sensor-card" id="card-accelerometer">
-                            <div class="sensor-icon">[ACC]</div>
-                            <div class="sensor-name">Acelerômetro</div>
-                            <div class="sensor-description">
-                                Mede aceleração linear nos eixos X, Y e Z em m/s²
-                            </div>
-                            <div id="status-accelerometer" class="sensor-status inactive">
+                            <h3>Acelerômetro</h3>
+                            <p>Aceleração linear nos eixos X, Y, Z (m/s²)</p>
+
+                            <div id="status-accelerometer" class="sensor-status">
                                 Verificando...
                             </div>
-                            <button
-                                class="view-graph-btn"
-                                id="btn-accelerometer"
-                                onclick="showGraph('accelerometer')"
-                                disabled>
+
+                            <button class="view-btn" id="btn-accelerometer" onclick="showGraph('accelerometer')" disabled>
                                 Ver Gráfico
                             </button>
                         </div>
                         {% endif %}
 
-                        <!-- Card do Giroscópio -->
+                        <!-- Giroscópio -->
                         {% if 'gyroscope' in device.sensors %}
                         <div class="sensor-card" id="card-gyroscope">
-                            <div class="sensor-icon">[GYR]</div>
-                            <div class="sensor-name">Giroscópio</div>
-                            <div class="sensor-description">
-                                Mede velocidade angular nos eixos X, Y e Z em rad/s
-                            </div>
-                            <div id="status-gyroscope" class="sensor-status inactive">
+                            <h3>Giroscópio</h3>
+                            <p>Velocidade angular nos eixos X, Y, Z (rad/s)</p>
+
+                            <div id="status-gyroscope" class="sensor-status">
                                 Verificando...
                             </div>
-                            <button
-                                class="view-graph-btn"
-                                id="btn-gyroscope"
-                                onclick="showGraph('gyroscope')"
-                                disabled>
+
+                            <button class="view-btn" id="btn-gyroscope" onclick="showGraph('gyroscope')" disabled>
                                 Ver Gráfico
                             </button>
                         </div>
                         {% endif %}
 
-                        <!-- Card do Magnetômetro -->
+                        <!-- Magnetômetro -->
                         {% if 'magnetometer' in device.sensors %}
                         <div class="sensor-card" id="card-magnetometer">
-                            <div class="sensor-icon">[MAG]</div>
-                            <div class="sensor-name">Magnetômetro</div>
-                            <div class="sensor-description">
-                                Mede campo magnético nos eixos X, Y e Z em μT
-                            </div>
-                            <div id="status-magnetometer" class="sensor-status inactive">
+                            <h3>Magnetômetro</h3>
+                            <p>Campo magnético nos eixos X, Y, Z (μT)</p>
+
+                            <div id="status-magnetometer" class="sensor-status">
                                 Verificando...
                             </div>
-                            <button
-                                class="view-graph-btn"
-                                id="btn-magnetometer"
-                                onclick="showGraph('magnetometer')"
-                                disabled>
+
+                            <button class="view-btn" id="btn-magnetometer" onclick="showGraph('magnetometer')" disabled>
                                 Ver Gráfico
                             </button>
                         </div>
@@ -94,36 +72,36 @@
                     {% endif %}
                 </div>
 
-                <!-- Mensagem quando nenhum sensor está ativo -->
-                <div id="no-sensors-message" class="no-sensors-message" style="display: none;">
-                    <div class="no-sensors-icon">[!]</div>
+                <!-- Estado vazio -->
+                <div id="no-sensors-message" class="empty-state" style="display: none;">
                     <h3>Nenhum sensor ativo</h3>
                     <p>Ative pelo menos um sensor no aplicativo móvel para começar a visualizar os dados.</p>
                 </div>
             </div>
 
-            <!-- Tela de Visualização do Gráfico -->
+            <!-- Tela de Gráfico -->
             <div id="graph-screen" class="graph-screen">
                 <div class="graph-header">
                     <div>
                         <div id="current-graph-title" class="graph-title">Gráfico do Sensor</div>
-                        <div id="current-graph-status" class="sensor-status active">Conectado</div>
                     </div>
                     <div class="graph-controls">
                         <button class="button primary" onclick="returnToSelection()">
-                            ← Voltar à Seleção
+                            ← Voltar
                         </button>
-                        <button class="button" id="toggle-x">Toggle X</button>
-                        <button class="button" id="toggle-y">Toggle Y</button>
-                        <button class="button" id="toggle-z">Toggle Z</button>
+                        <button class="button" id="toggle-x">X</button>
+                        <button class="button" id="toggle-y">Y</button>
+                        <button class="button" id="toggle-z">Z</button>
                         <button class="button danger" onclick="reconnectCurrentGraph()">
-                            Reconectar WebSocket
+                            Reconectar
                         </button>
                     </div>
                 </div>
 
-                <div id="current-graph" class="graph-container"></div>
-                <div id="loading-current" class="loading">Carregando dados...</div>
+                <div class="graph-container">
+                    <div id="current-graph"></div>
+                    <div id="loading-current" class="loading">Carregando dados...</div>
+                </div>
             </div>
         </div>
 
@@ -138,7 +116,7 @@
             }
         </script>
 
-        <!-- Inicialização das variáveis globais -->
+        <!-- Inicialização -->
         <script>
             const deviceDataElement = document.getElementById("device-data");
             if (deviceDataElement) {
@@ -154,13 +132,11 @@
                     window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope', 'magnetometer'];
                 }
             } else {
-                console.error('Elemento device-data não encontrado!');
                 window.DEVICE_ID = "{{ device_id }}";
                 window.AVAILABLE_SENSORS = ['accelerometer', 'gyroscope', 'magnetometer'];
             }
         </script>
 
-        <!-- Scripts -->
         <script src="/static/js/graph.js"></script>
         <script src="/static/js/device.js"></script>
     </body>

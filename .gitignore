@@ -17,3 +17,6 @@ path/
 __pycache__
 .venv
 .idea
+.idea/
+*.iml
+*.iws
