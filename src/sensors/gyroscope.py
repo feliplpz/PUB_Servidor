@@ -9,9 +9,18 @@ from src.utils.logging import Logger
 
 
 class Gyroscope(Accelerometer):
-    """Sensor de giroscópio"""
+    """Gyroscope sensor implementation."""
 
     def process_data(self, data):
+        """
+        Process received gyroscope data.
+
+        Args:
+            data (dict): Gyroscope data for x, y and z axes
+
+        Returns:
+            bool: True if data processed successfully
+        """
         try:
             accel_x = data.get("x", float("nan"))
             accel_y = data.get("y", float("nan"))
@@ -40,17 +49,20 @@ class Gyroscope(Accelerometer):
 
             return True
         except Exception as e:
-            Logger.log_message(f"Erro ao processar dados do giroscópio: {e}")
+            Logger.log_error(f"Error processing gyroscope data: {e}")
             return False
 
     def save_to_file(self, data, device_name, device_id):
         """
-        Salva os dados do giroscópio em um arquivo
+        Save gyroscope data to CSV file.
 
         Args:
-            data (dict): Dados do giroscópio
-            device_name (str): Nome do dispositivo
-            device_id (str): ID do dispositivo
+            data (dict): Gyroscope data to be saved
+            device_name (str): Device name
+            device_id (str): Device identifier
+
+        Returns:
+            bool: True if data saved successfully
         """
         try:
             gyro_x = data.get("x", float("nan"))
@@ -86,5 +98,5 @@ class Gyroscope(Accelerometer):
                 )
             return True
         except Exception as e:
-            Logger.log_message(f"Erro ao salvar dados do giroscópio: {e}")
+            Logger.log_error(f"Error saving gyroscope data: {e}")
             return False

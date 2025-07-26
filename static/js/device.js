@@ -13,34 +13,34 @@ let currentScreen = 'selection';
 let currentSensor = null;
 let currentGraph = null;
 let sensorStates = {};
-let monitoringGraphs = {}; // SensorGraph com mode='monitoring'
+let monitoringGraphs = {};
 
 const sensorConfigs = {
     accelerometer: {
-        title: 'Acelerômetro - Aceleração Linear',
-        yAxisTitle: 'Aceleração (m/s²)',
+        title: 'Accelerometer - Linear Acceleration',
+        yAxisTitle: 'Acceleration (m/s²)',
         colors: ['#1f77b4', '#ff7f0e', '#2ca02c'],
-        axisLabels: ['Aceleração X', 'Aceleração Y', 'Aceleração Z'],
+        axisLabels: ['Acceleration X', 'Acceleration Y', 'Acceleration Z'],
         unit: '(m/s²)'
     },
     gyroscope: {
-        title: 'Giroscópio - Velocidade Angular',
-        yAxisTitle: 'Velocidade Angular (rad/s)',
+        title: 'Gyroscope - Angular Velocity',
+        yAxisTitle: 'Angular Velocity (rad/s)',
         colors: ['#d62728', '#9467bd', '#8c564b'],
-        axisLabels: ['Giroscópio X', 'Giroscópio Y', 'Giroscópio Z'],
+        axisLabels: ['Gyroscope X', 'Gyroscope Y', 'Gyroscope Z'],
         unit: '(rad/s)'
     },
     magnetometer: {
-        title: 'Magnetômetro - Campo Magnético',
-        yAxisTitle: 'Campo Magnético (μT)',
+        title: 'Magnetometer - Magnetic Field',
+        yAxisTitle: 'Magnetic Field (μT)',
         colors: ['#ff6b6b', '#4ecdc4', '#45b7d1'],
-        axisLabels: ['Magnético X', 'Magnético Y', 'Magnético Z'],
+        axisLabels: ['Magnetic X', 'Magnetic Y', 'Magnetic Z'],
         unit: '(μT)'
     }
 };
 
 function initializeApp() {
-    console.log('🚀 App limpo: classe genérica + dados ativos');
+    console.log('App initialized: generic class + active data');
 
     availableSensors.forEach(sensor => {
         sensorStates[sensor] = {
@@ -57,16 +57,16 @@ function initializeApp() {
     updateOverallStatus();
 }
 
-// Cria SensorGraph invisível para cada sensor (só para monitoring)
+/**
+ * Creates hidden SensorGraph instances for monitoring each sensor
+ */
 function createMonitoringGraphs() {
     availableSensors.forEach(sensorType => {
-        // Container temporário oculto para monitoring
         const tempContainer = document.createElement('div');
         tempContainer.id = `monitoring-${sensorType}`;
         tempContainer.style.display = 'none';
         document.body.appendChild(tempContainer);
 
-        // SensorGraph em modo monitoring
         monitoringGraphs[sensorType] = new SensorGraph({
             deviceId: device_id,
             sensorType: sensorType,
@@ -75,7 +75,6 @@ function createMonitoringGraphs() {
             ...sensorConfigs[sensorType]
         });
 
-        // Intercepta updateData para capturar dados
         const originalUpdateData = monitoringGraphs[sensorType].updateData;
         monitoringGraphs[sensorType].updateData = function(data) {
             handleMonitoringData(sensorType, data);
@@ -97,7 +96,9 @@ function handleMonitoringData(sensorType, data) {
     updateOverallStatus();
 }
 
-// Checa se dados são recentes (sensor ativo)
+/**
+ * Checks if sensor data is recent to determine active status
+ */
 function startActiveCheck() {
     setInterval(() => {
         const now = Date.now();
@@ -108,8 +109,8 @@ function startActiveCheck() {
             const timeSinceData = now - state.lastDataTime;
             const wasActive = state.isActive;
 
-            // Inativo se sem dados há >5s
-            state.isActive = state.hasData && timeSinceData < 5000;
+            // Inactive if no data for >3s
+            state.isActive = state.hasData && timeSinceData < 3000;
 
             if (wasActive !== state.isActive) {
                 anyChanged = true;
@@ -136,30 +137,30 @@ function updateSensorCard(sensorType) {
     if (!graph?.isConnected) {
         card.className = 'sensor-card inactive';
         status.className = 'sensor-status inactive';
-        status.textContent = '🔌 Conectando...';
+        status.textContent = 'Connecting...';
         button.disabled = true;
-        button.textContent = 'Conectando...';
+        button.textContent = 'Connecting...';
 
     } else if (!state.hasData) {
         card.className = 'sensor-card inactive';
         status.className = 'sensor-status inactive';
-        status.textContent = '📊 Sem dados';
+        status.textContent = 'No data';
         button.disabled = true;
-        button.textContent = 'Sem Dados';
+        button.textContent = 'No Data';
 
     } else if (state.isActive) {
         card.className = 'sensor-card active';
         status.className = 'sensor-status active';
-        status.textContent = `🟢 Ativo (${state.dataPoints} pontos)`;
+        status.textContent = `Active (${state.dataPoints} points)`;
         button.disabled = false;
-        button.textContent = 'Ver Gráfico';
+        button.textContent = 'View Graph';
 
     } else {
         card.className = 'sensor-card inactive';
         status.className = 'sensor-status inactive';
-        status.textContent = `⏸️ Pausado (${state.dataPoints} pontos)`;
+        status.textContent = `Paused (${state.dataPoints} points)`;
         button.disabled = true;
-        button.textContent = 'Inativo';
+        button.textContent = 'Inactive';
     }
 }
 
@@ -174,11 +175,11 @@ function updateOverallStatus() {
     const connectedGraphs = Object.values(monitoringGraphs).filter(g => g?.isConnected).length;
 
     if (activeSensors > 0) {
-        statusElement.innerHTML = `<strong>${activeSensors}/${availableSensors.length} sensores ativos</strong>`;
+        statusElement.innerHTML = `<strong>${activeSensors}/${availableSensors.length} active sensors</strong>`;
         if (noSensorsMessage) noSensorsMessage.style.display = 'none';
         if (sensorGrid) sensorGrid.style.display = 'grid';
     } else {
-        statusElement.innerHTML = `<strong>Nenhum sensor ativo (${connectedGraphs} conectados)</strong>`;
+        statusElement.innerHTML = `<strong>No active sensors (${connectedGraphs} connected)</strong>`;
         if (noSensorsMessage) noSensorsMessage.style.display = 'block';
     }
 }
@@ -187,16 +188,15 @@ function showGraph(sensorType) {
     const state = sensorStates[sensorType];
 
     if (!state?.isActive) {
-        alert(`Sensor ${sensorType} não está ativo.\nAtive no app móvel.`);
+        alert(`Sensor ${sensorType} is not active.\nActivate it in the mobile app.`);
         return;
     }
 
-    console.log(`📊 Gráfico: ${sensorType}`);
+    console.log(`Showing graph: ${sensorType}`);
 
     currentScreen = 'graph';
     currentSensor = sensorType;
 
-    // MOSTRA TELA IMEDIATAMENTE
     document.getElementById('selection-screen')?.classList.add('hidden');
     document.getElementById('graph-screen')?.classList.add('active');
 
@@ -209,10 +209,9 @@ function showGraph(sensorType) {
 
     if (statusElement) {
         statusElement.className = 'sensor-status active';
-        statusElement.textContent = '📊 Pronto!';
+        statusElement.textContent = 'Ready!';
     }
 
-    // CRIA GRÁFICO VAZIO INSTANTÂNEO
     const container = document.getElementById('current-graph');
     if (container) {
         container.innerHTML = '';
@@ -226,7 +225,7 @@ function showGraph(sensorType) {
 
         const layout = {
             title: config.title,
-            xaxis: { title: 'Tempo (s)', showgrid: true, gridcolor: '#444' },
+            xaxis: { title: 'Time (s)', showgrid: true, gridcolor: '#444' },
             yaxis: { title: config.yAxisTitle, showgrid: true, gridcolor: '#444' },
             plot_bgcolor: "#121212",
             paper_bgcolor: "#121212",
@@ -236,7 +235,6 @@ function showGraph(sensorType) {
         Plotly.newPlot('current-graph', emptyData, layout);
     }
 
-    // CARREGA DADOS EM BACKGROUND
     setTimeout(() => {
         if (currentGraph) {
             currentGraph.disconnect();
@@ -304,14 +302,11 @@ function setupEventListeners() {
     });
 }
 
-// Funções globais
 window.showGraph = showGraph;
 window.returnToSelection = returnToSelection;
 window.reconnectCurrentGraph = reconnectCurrentGraph;
 
-// Debug
 window.sensorStates = sensorStates;
 window.monitoringGraphs = monitoringGraphs;
 
-// Inicialização
 document.addEventListener('DOMContentLoaded', initializeApp);

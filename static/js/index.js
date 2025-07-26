@@ -14,7 +14,7 @@ let connectionStats = {
 
 function connectWebSocket() {
     if (websocket && websocket.readyState === WebSocket.CONNECTING) {
-        console.log('WebSocket já está tentando conectar...');
+        console.log('WebSocket already attempting to connect...');
         return;
     }
 
@@ -25,31 +25,31 @@ function connectWebSocket() {
     const wsHost = window.location.host;
     const wsUrl = `${wsProtocol}//${wsHost}/ws/devices`;
 
-    console.log(`Tentativa ${reconnectAttempts + 1}: Conectando WebSocket:`, wsUrl);
-    updateDebugInfo(`Conectando... (tentativa ${reconnectAttempts + 1})`);
+    console.log(`Attempt ${reconnectAttempts + 1}: Connecting WebSocket:`, wsUrl);
+    updateDebugInfo(`Connecting... (attempt ${reconnectAttempts + 1})`);
 
     loading.style.display = 'block';
-    status.innerHTML = '<span class="status-indicator"></span>Conectando...';
+    status.innerHTML = '<span class="status-indicator"></span>Connecting...';
     status.className = 'status reconnecting';
 
     try {
         websocket = new WebSocket(wsUrl);
 
         websocket.onopen = function(event) {
-            console.log('WebSocket da lista de dispositivos conectado');
+            console.log('Device list WebSocket connected');
             isConnected = true;
             reconnectAttempts = 0;
             loading.style.display = 'none';
-            status.innerHTML = '<span class="status-indicator"></span>Conectado';
+            status.innerHTML = '<span class="status-indicator"></span>Connected';
             status.className = 'status connected';
 
             connectionStats.connected_at = new Date();
-            updateDebugInfo('Conectado via WebSocket');
+            updateDebugInfo('Connected via WebSocket');
 
             if (fallbackPollingInterval) {
                 clearInterval(fallbackPollingInterval);
                 fallbackPollingInterval = null;
-                console.log('Fallback polling desabilitado');
+                console.log('Fallback polling disabled');
             }
 
             if (reconnectInterval) {
@@ -61,43 +61,43 @@ function connectWebSocket() {
         websocket.onmessage = function(event) {
             try {
                 const message = JSON.parse(event.data);
-                console.log('Mensagem recebida:', message);
+                console.log('Message received:', message);
 
                 connectionStats.last_message = new Date();
                 connectionStats.message_count++;
 
                 if (message.type === 'device_list_update') {
                     updateDeviceList(message.devices);
-                    updateDebugInfo(`Última atualização: ${connectionStats.last_message.toLocaleTimeString()}`);
+                    updateDebugInfo(`Last update: ${connectionStats.last_message.toLocaleTimeString()}`);
                 }
             } catch (error) {
-                console.error('❌ Erro ao processar mensagem:', error);
+                console.error('Error processing message:', error);
             }
         };
 
         websocket.onerror = function(error) {
-            console.error('❌ Erro WebSocket:', error);
+            console.error('WebSocket error:', error);
             isConnected = false;
-            status.innerHTML = '<span class="status-indicator"></span>Erro na conexão';
+            status.innerHTML = '<span class="status-indicator"></span>Connection error';
             status.className = 'status disconnected';
-            updateDebugInfo('Erro na conexão WebSocket');
+            updateDebugInfo('WebSocket connection error');
         };
 
         websocket.onclose = function(event) {
-            console.log('WebSocket desconectado:', event.code, event.reason);
+            console.log('WebSocket disconnected:', event.code, event.reason);
             isConnected = false;
             loading.style.display = 'none';
-            status.innerHTML = '<span class="status-indicator"></span>Desconectado';
+            status.innerHTML = '<span class="status-indicator"></span>Disconnected';
             status.className = 'status disconnected';
 
-            updateDebugInfo(`Desconectado (código: ${event.code})`);
+            updateDebugInfo(`Disconnected (code: ${event.code})`);
 
             if (event.code !== 1000 && event.code !== 1001 && reconnectAttempts < maxReconnectAttempts) {
                 reconnectAttempts++;
                 connectionStats.reconnections++;
 
                 const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 10000);
-                console.log(`tentando reconectar em ${delay}ms...`);
+                console.log(`Attempting reconnect in ${delay}ms...`);
 
                 if (!reconnectInterval) {
                     reconnectInterval = setTimeout(() => {
@@ -106,16 +106,16 @@ function connectWebSocket() {
                     }, delay);
                 }
             } else if (reconnectAttempts >= maxReconnectAttempts) {
-                console.log(' Máximo de tentativas de reconexão atingido. Ativando fallback polling.');
-                updateDebugInfo('WebSocket falhou. Usando polling como fallback.');
+                console.log('Maximum reconnection attempts reached. Activating fallback polling.');
+                updateDebugInfo('WebSocket failed. Using polling as fallback.');
                 startFallbackPolling();
             }
         };
 
     } catch (error) {
-        console.error(' Erro ao criar WebSocket:', error);
+        console.error('Error creating WebSocket:', error);
         isConnected = false;
-        updateDebugInfo('Erro ao criar WebSocket');
+        updateDebugInfo('Error creating WebSocket');
         startFallbackPolling();
     }
 }
@@ -123,8 +123,8 @@ function connectWebSocket() {
 function startFallbackPolling() {
     if (fallbackPollingInterval) return;
 
-    console.log('Iniciando fallback polling...');
-    updateDebugInfo('Usando polling HTTP como fallback');
+    console.log('Starting fallback polling...');
+    updateDebugInfo('Using HTTP polling as fallback');
 
     fallbackPollingInterval = setInterval(async () => {
         try {
@@ -134,13 +134,13 @@ function startFallbackPolling() {
                 updateDeviceList(devices);
 
                 const status = document.getElementById('connectionStatus');
-                status.innerHTML = '<span class="status-indicator"></span>Conectado (HTTP)';
+                status.innerHTML = '<span class="status-indicator"></span>Connected (HTTP)';
                 status.className = 'status connected';
-                updateDebugInfo('Polling HTTP ativo');
+                updateDebugInfo('HTTP polling active');
             }
         } catch (error) {
-            console.error('❌ Erro no fallback polling:', error);
-            updateDebugInfo('Erro no polling HTTP');
+            console.error('Error in fallback polling:', error);
+            updateDebugInfo('HTTP polling error');
         }
     }, 2000);
 }
@@ -163,7 +163,7 @@ function updateDeviceList(devices) {
         if (!newDeviceIds.has(deviceId)) {
             const deviceElement = deviceList.querySelector(`[data-device-id="${deviceId}"]`);
             if (deviceElement) {
-                console.log(`Removendo dispositivo: ${deviceId}`);
+                console.log(`Removing device: ${deviceId}`);
                 deviceElement.classList.add('removing');
                 setTimeout(() => {
                     if (deviceElement.parentNode) {
@@ -181,9 +181,9 @@ function updateDeviceList(devices) {
             noDevDiv.className = 'no-devices';
             noDevDiv.innerHTML = `
                 <div class="no-devices-icon">📱</div>
-                <div>Nenhum dispositivo conectado.</div>
+                <div>No devices connected.</div>
                 <div class="no-devices-subtitle">
-                    Conecte um dispositivo móvel via Bluetooth para começar.
+                    Connect a mobile device via Bluetooth to get started.
                 </div>
             `;
             deviceList.appendChild(noDevDiv);
@@ -199,7 +199,7 @@ function updateDeviceList(devices) {
             let deviceElement = deviceList.querySelector(`[data-device-id="${deviceId}"]`);
 
             if (!deviceElement) {
-                console.log(`Adicionando novo dispositivo: ${device.name} (${deviceId})`);
+                console.log(`Adding new device: ${device.name} (${deviceId})`);
 
                 deviceElement = document.createElement('li');
                 deviceElement.className = 'device-item new';
@@ -209,14 +209,14 @@ function updateDeviceList(devices) {
                     <div>
                         <div class="device-name">${device.name}</div>
                         <div class="device-id">ID: ${deviceId}</div>
-                        <div class="device-time">Conectado em: ${device.connected_at}</div>
+                        <div class="device-time">Connected at: ${device.connected_at}</div>
                         ${device.sensor_count > 0 ? `
                         <div class="sensor-info">
-                            📊 ${device.active_sensor_count}/${device.sensor_count} sensores ativos
+                            ${device.active_sensor_count}/${device.sensor_count} active sensors
                         </div>
                         ` : ''}
                     </div>
-                    <a href="/device/${deviceId}" class="device-link">Ver detalhes</a>
+                    <a href="/device/${deviceId}" class="device-link">View details</a>
                 `;
 
                 deviceList.appendChild(deviceElement);
@@ -225,7 +225,6 @@ function updateDeviceList(devices) {
                     deviceElement.classList.remove('new');
                 }, 500);
             } else {
-                // Atualiza dispositivo existente
                 const nameElement = deviceElement.querySelector('.device-name');
                 const timeElement = deviceElement.querySelector('.device-time');
 
@@ -233,16 +232,15 @@ function updateDeviceList(devices) {
                     nameElement.textContent = device.name;
                 }
 
-                const expectedTime = `Conectado em: ${device.connected_at}`;
+                const expectedTime = `Connected at: ${device.connected_at}`;
                 if (timeElement.textContent !== expectedTime) {
                     timeElement.textContent = expectedTime;
                 }
 
-                // Atualiza info de sensores
                 const deviceDiv = deviceElement.querySelector('div');
                 const existingSensorInfo = deviceDiv.querySelector('.sensor-info');
                 const newSensorInfo = device.sensor_count > 0 ?
-                    `📊 ${device.active_sensor_count}/${device.sensor_count} sensores ativos` : '';
+                    `${device.active_sensor_count}/${device.sensor_count} active sensors` : '';
 
                 if (newSensorInfo && !existingSensorInfo) {
                     const sensorDiv = document.createElement('div');
@@ -275,14 +273,14 @@ function updateDebugInfo(status) {
         const uptime = Math.floor((new Date() - connectionStats.connected_at) / 1000);
         debugStats.innerHTML = `
             Uptime: ${uptime}s |
-            Reconexões: ${connectionStats.reconnections} |
-            Mensagens: ${connectionStats.message_count}
+            Reconnections: ${connectionStats.reconnections} |
+            Messages: ${connectionStats.message_count}
         `;
     }
 }
 
 function manualRefresh() {
-    console.log('Atualização manual solicitada');
+    console.log('Manual refresh requested');
 
     if (isConnected && websocket) {
         websocket.send(JSON.stringify({ type: 'request_update' }));
@@ -291,11 +289,11 @@ function manualRefresh() {
             .then(response => response.json())
             .then(devices => {
                 updateDeviceList(devices);
-                updateDebugInfo('Atualização manual via HTTP');
+                updateDebugInfo('Manual refresh via HTTP');
             })
             .catch(error => {
-                console.error('Erro na atualização manual:', error);
-                updateDebugInfo('Erro na atualização manual');
+                console.error('Error in manual refresh:', error);
+                updateDebugInfo('Manual refresh error');
             });
     }
 }
@@ -307,9 +305,8 @@ function setupEventListeners() {
     }
 }
 
-// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    console.log(' Inicializando aplicação...');
+    console.log('Initializing application...');
     setupEventListeners();
     connectWebSocket();
 });

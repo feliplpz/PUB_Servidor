@@ -3,12 +3,12 @@ class SensorGraph {
         this.deviceId = config.deviceId;
         this.sensorType = config.sensorType;
         this.containerId = config.containerId;
-        this.title = config.title || `Dados do ${config.sensorType}`;
-        this.yAxisTitle = config.yAxisTitle || 'Valores';
+        this.title = config.title || `Data from ${config.sensorType}`;
+        this.yAxisTitle = config.yAxisTitle || 'Values';
         this.colors = config.colors || ['blue', 'orange', 'green'];
         this.axisLabels = config.axisLabels || ['X', 'Y', 'Z'];
         this.unit = config.unit || '';
-        this.mode = config.mode || 'graph'; // 'graph' ou 'monitoring'
+        this.mode = config.mode || 'graph';
 
         this.websocket = null;
         this.isConnected = false;
@@ -17,7 +17,7 @@ class SensorGraph {
 
         this.layout = {
             title: this.title,
-            xaxis: { title: 'Tempo (s)', showgrid: true, gridcolor: '#444' },
+            xaxis: { title: 'Time (s)', showgrid: true, gridcolor: '#444' },
             yaxis: { title: this.yAxisTitle, showgrid: true, gridcolor: '#444' },
             showlegend: true,
             plot_bgcolor: "#121212",
@@ -43,9 +43,9 @@ class SensorGraph {
     createGraph() {
         try {
             Plotly.newPlot(this.containerId, this.plotlyData, this.layout);
-            console.log(`Gráfico criado: ${this.sensorType}`);
+            console.log(`Graph created: ${this.sensorType}`);
         } catch (error) {
-            console.error('Erro ao criar gráfico:', error);
+            console.error('Error creating graph:', error);
         }
     }
 
@@ -53,7 +53,7 @@ class SensorGraph {
         try {
             Plotly.react(this.containerId, this.plotlyData, this.layout);
         } catch (error) {
-            console.error('Erro ao atualizar gráfico:', error);
+            console.error('Error updating graph:', error);
         }
     }
 
@@ -70,13 +70,13 @@ class SensorGraph {
         const wsHost = window.location.host;
         const wsUrl = `${wsProtocol}//${wsHost}/ws/device/${this.deviceId}/sensor/${this.sensorType}?mode=${this.mode}`;
 
-        console.log(`Conectando WebSocket ${this.mode}: ${this.sensorType}`);
+        console.log(`Connecting WebSocket ${this.mode}: ${this.sensorType}`);
 
         try {
             this.websocket = new WebSocket(wsUrl);
 
             this.websocket.onopen = () => {
-                console.log(`✅ WebSocket ${this.mode} conectado: ${this.sensorType}`);
+                console.log(`WebSocket ${this.mode} connected: ${this.sensorType}`);
                 this.isConnected = true;
             };
 
@@ -88,22 +88,22 @@ class SensorGraph {
                         this.updateData(message.data);
                     }
                 } catch (error) {
-                    console.error(`Erro ao processar dados ${this.mode}:`, error);
+                    console.error(`Error processing ${this.mode} data:`, error);
                 }
             };
 
             this.websocket.onerror = (error) => {
-                console.error(`Erro WebSocket ${this.mode}:`, error);
+                console.error(`WebSocket ${this.mode} error:`, error);
                 this.isConnected = false;
             };
 
             this.websocket.onclose = (event) => {
-                console.log(`WebSocket ${this.mode} desconectado: ${this.sensorType} (${event.code})`);
+                console.log(`WebSocket ${this.mode} disconnected: ${this.sensorType} (${event.code})`);
                 this.isConnected = false;
             };
 
         } catch (error) {
-            console.error(`Erro ao criar WebSocket ${this.mode}:`, error);
+            console.error(`Error creating WebSocket ${this.mode}:`, error);
             this.isConnected = false;
         }
     }
@@ -131,7 +131,7 @@ class SensorGraph {
 
     disconnect() {
         if (this.websocket && this.isConnected) {
-            this.websocket.close(1000, `Fechando ${this.mode}`);
+            this.websocket.close(1000, `Closing ${this.mode}`);
             this.websocket = null;
             this.isConnected = false;
         }
@@ -139,7 +139,7 @@ class SensorGraph {
 
     reconnect() {
         if (!this.isConnected) {
-            console.log(`Reconectando ${this.mode}: ${this.sensorType}`);
+            console.log(`Reconnecting ${this.mode}: ${this.sensorType}`);
             this.connectWebSocket();
         }
     }

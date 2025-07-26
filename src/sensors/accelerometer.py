@@ -6,11 +6,12 @@ from src.utils.logging import Logger
 from src.sensors.base_sensor import Sensor, ACCELEROMETER, DIVIDER, EXTENSION
 from src.connection.event_bus import EventBus
 
+
 class Accelerometer(Sensor):
-    """Implementação do sensor de acelerômetro"""
+    """Accelerometer sensor implementation."""
 
     def initialize_data_storage(self):
-        """Inicializa as estruturas de dados para armazenamento do acelerômetro"""
+        """Initialize data storage structures for accelerometer."""
         self.header_time = datetime.now()
         self.start_time = time.time()
         self.data_t = deque(maxlen=self.max_data_points)
@@ -20,10 +21,13 @@ class Accelerometer(Sensor):
 
     def process_data(self, data):
         """
-        Processa dados recebidos do acelerômetro
+        Process received accelerometer data.
 
         Args:
-            data (dict): Dados de aceleração nos eixos x, y e z
+            data (dict): Acceleration data for x, y and z axes
+
+        Returns:
+            bool: True if data processed successfully
         """
         try:
             accel_x = data.get("x", float("nan"))
@@ -31,7 +35,7 @@ class Accelerometer(Sensor):
             accel_z = data.get("z", float("nan"))
 
             if not all(
-                isinstance(v, (int, float)) for v in (accel_x, accel_y, accel_z)
+                    isinstance(v, (int, float)) for v in (accel_x, accel_y, accel_z)
             ):
                 return False
 
@@ -42,8 +46,6 @@ class Accelerometer(Sensor):
                 self.data_y.append(accel_y)
                 self.data_z.append(accel_z)
 
-            # Logger.log_message(f"Accelerometer: 📊 PUBLICANDO EVENTO: {self.device_id}: Dados: {self.get_data()}")
-            # Publica os dados para quem estiver interessado
             EventBus.publish(
                 "sensor_update",
                 {
@@ -55,10 +57,19 @@ class Accelerometer(Sensor):
 
             return True
         except Exception as e:
-            Logger.log_message(f"Erro ao processar dados do acelerômetro: {e}")
+            Logger.log_error(f"Error processing accelerometer data: {e}")
             return False
 
     def get_data(self, limit=100):
+        """
+        Get accelerometer data with optional limit.
+
+        Args:
+            limit (int): Maximum number of data points to return
+
+        Returns:
+            dict: Dictionary containing time and acceleration data arrays
+        """
         with self.data_lock:
             return {
                 "time": list(self.data_t)[-limit:],
@@ -66,14 +77,18 @@ class Accelerometer(Sensor):
                 "y": list(self.data_y)[-limit:],
                 "z": list(self.data_z)[-limit:],
             }
+
     def save_to_file(self, data, device_name, device_id):
         """
-        Salva os dados do acelerômetro em um arquivo CSV
+        Save accelerometer data to CSV file.
 
         Args:
-            data (dict): Dados a serem salvos
-            device_name (str): Nome do dispositivo
-            device_id (str): ID do dispositivo
+            data (dict): Data to be saved
+            device_name (str): Device name
+            device_id (str): Device identifier
+
+        Returns:
+            bool: True if data saved successfully
         """
         try:
             accel_x = data.get("x", float("nan"))
@@ -82,19 +97,19 @@ class Accelerometer(Sensor):
             if self.date_in_milliseconds:
                 current_time_seconds = time.time()
                 timestamp = round(current_time_seconds - self.start_time, 4)
-            else: 
+            else:
                 timestamp = datetime.now().isoformat()
             start_time_formatted = datetime.fromtimestamp(self.start_time).strftime('%d_%m_%y___%H_%M_%S')
             file_path = (
-                os.getenv("DATA_FILE_PATH", "")
-                + ACCELEROMETER
-                + DIVIDER
-                + device_name
-                + DIVIDER
-                + device_id
-                + DIVIDER
-                + start_time_formatted
-                + EXTENSION
+                    os.getenv("DATA_FILE_PATH", "")
+                    + ACCELEROMETER
+                    + DIVIDER
+                    + device_name
+                    + DIVIDER
+                    + device_id
+                    + DIVIDER
+                    + start_time_formatted
+                    + EXTENSION
             )
             is_new_file = not os.path.exists(file_path)
 
@@ -103,11 +118,11 @@ class Accelerometer(Sensor):
                     f.write(
                         "timestamp,accel_x,accel_y,accel_z\n"
                     )
-                    
+
                 f.write(
                     f"{timestamp},{accel_x},{accel_y},{accel_z}\n"
                 )
             return True
         except Exception as e:
-            Logger.log_message(f"Erro ao salvar dados: {e}")
+            Logger.log_error(f"Error saving data: {e}")
             return False

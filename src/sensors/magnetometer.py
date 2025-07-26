@@ -9,11 +9,12 @@ from src.utils.logging import Logger
 
 MAGNETOMETER = "magnetometer"
 
+
 class Magnetometer(Sensor):
-    """Sensor de magnetômetro - implementação corrigida"""
+    """Magnetometer sensor implementation."""
 
     def initialize_data_storage(self):
-        """Inicializa as estruturas de dados para armazenamento do magnetômetro"""
+        """Initialize data storage structures for magnetometer."""
         self.header_time = datetime.now()
         self.start_time = time.time()
         self.data_t = deque(maxlen=self.max_data_points)
@@ -23,10 +24,13 @@ class Magnetometer(Sensor):
 
     def process_data(self, data):
         """
-        Processa dados recebidos do magnetômetro
+        Process received magnetometer data.
 
         Args:
-            data (dict): Dados de campo magnético nos eixos x, y e z
+            data (dict): Magnetic field data for x, y and z axes
+
+        Returns:
+            bool: True if data processed successfully
         """
         try:
             mag_x = data.get("x", float("nan"))
@@ -34,7 +38,7 @@ class Magnetometer(Sensor):
             mag_z = data.get("z", float("nan"))
 
             if not all(
-                isinstance(v, (int, float)) for v in (mag_x, mag_y, mag_z)
+                    isinstance(v, (int, float)) for v in (mag_x, mag_y, mag_z)
             ):
                 return False
 
@@ -45,7 +49,6 @@ class Magnetometer(Sensor):
                 self.data_y.append(mag_y)
                 self.data_z.append(mag_z)
 
-            # Publica os dados para quem estiver interessado
             EventBus.publish(
                 "sensor_update",
                 {
@@ -57,10 +60,19 @@ class Magnetometer(Sensor):
 
             return True
         except Exception as e:
-            Logger.log_message(f"Erro ao processar dados do magnetômetro: {e}")
+            Logger.log_error(f"Error processing magnetometer data: {e}")
             return False
 
     def get_data(self, limit=100):
+        """
+        Get magnetometer data with optional limit.
+
+        Args:
+            limit (int): Maximum number of data points to return
+
+        Returns:
+            dict: Dictionary containing time and magnetic field data arrays
+        """
         with self.data_lock:
             return {
                 "time": list(self.data_t)[-limit:],
@@ -71,12 +83,15 @@ class Magnetometer(Sensor):
 
     def save_to_file(self, data, device_name, device_id):
         """
-        Salva os dados do magnetômetro em um arquivo CSV
+        Save magnetometer data to CSV file.
 
         Args:
-            data (dict): Dados do magnetômetro
-            device_name (str): Nome do dispositivo
-            device_id (str): ID do dispositivo
+            data (dict): Magnetometer data to be saved
+            device_name (str): Device name
+            device_id (str): Device identifier
+
+        Returns:
+            bool: True if data saved successfully
         """
         try:
             mag_x = data.get("x", float("nan"))
@@ -88,18 +103,18 @@ class Magnetometer(Sensor):
                 timestamp = round(current_time_seconds - self.start_time, 4)
             else:
                 timestamp = datetime.now().isoformat()
-            
+
             start_time_formatted = datetime.fromtimestamp(self.start_time).strftime('%d_%m_%y___%H_%M_%S')
             file_path = (
-                os.getenv("DATA_FILE_PATH", "")
-                + MAGNETOMETER
-                + DIVIDER
-                + device_name
-                + DIVIDER
-                + device_id
-                + DIVIDER
-                + start_time_formatted
-                + EXTENSION
+                    os.getenv("DATA_FILE_PATH", "")
+                    + MAGNETOMETER
+                    + DIVIDER
+                    + device_name
+                    + DIVIDER
+                    + device_id
+                    + DIVIDER
+                    + start_time_formatted
+                    + EXTENSION
             )
             is_new_file = not os.path.exists(file_path)
 
@@ -113,5 +128,5 @@ class Magnetometer(Sensor):
                 )
             return True
         except Exception as e:
-            Logger.log_message(f"Erro ao salvar dados do magnetômetro: {e}")
+            Logger.log_error(f"Error saving magnetometer data: {e}")
             return False

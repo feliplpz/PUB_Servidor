@@ -5,11 +5,19 @@ import json
 import time
 from src.utils.logging import Logger
 
-def register_routes(app, templates, websocket_manager):
 
+def register_routes(app, templates, websocket_manager):
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
-        """Rota principal que lista todos os dispositivos conectados"""
+        """
+        Main route that lists all connected devices.
+
+        Args:
+            request (Request): FastAPI request object
+
+        Returns:
+            HTMLResponse: Rendered index template with devices
+        """
         devices = DeviceManager.get_serializable_devices()
         return templates.TemplateResponse("index.html", {
             "request": request,
@@ -18,7 +26,16 @@ def register_routes(app, templates, websocket_manager):
 
     @app.get("/device/{device_id}", response_class=HTMLResponse)
     async def device_page(request: Request, device_id: str):
-        """Rota para página específica de um dispositivo"""
+        """
+        Route for specific device page.
+
+        Args:
+            request (Request): FastAPI request object
+            device_id (str): Device identifier
+
+        Returns:
+            HTMLResponse: Rendered device template or redirect to home
+        """
         devices = DeviceManager.get_all_devices()
         if device_id not in devices:
             return RedirectResponse(url="/")
@@ -27,9 +44,9 @@ def register_routes(app, templates, websocket_manager):
 
         try:
             sensor_keys = list(device.get("sensors", {}).keys())
-            Logger.log_message(f"Renderizando página do dispositivo {device_id} com sensores: {sensor_keys}")
+            Logger.log_message(f"Rendering device page {device_id} with sensors: {sensor_keys}")
         except Exception as e:
-            Logger.log_message(f"Erro ao listar sensores para template: {e}")
+            Logger.log_message(f"Error listing sensors for template: {e}")
             sensor_keys = []
 
         return templates.TemplateResponse("device.html", {
@@ -40,17 +57,30 @@ def register_routes(app, templates, websocket_manager):
 
     @app.get("/api/devices")
     async def get_all_devices():
-        """API para obter lista de todos os dispositivos"""
+        """
+        API to get list of all devices.
+
+        Returns:
+            dict: All devices with serializable data
+        """
         devices = DeviceManager.get_serializable_devices()
         return devices
 
     @app.get("/api/device/{device_id}/info")
     async def get_device_info(device_id: str):
-        """API para obter informações detalhadas de um dispositivo incluindo status dos sensores"""
+        """
+        API to get detailed device information including sensor status.
+
+        Args:
+            device_id (str): Device identifier
+
+        Returns:
+            dict: Detailed device information with sensor status
+        """
         devices = DeviceManager.get_all_devices()
 
         if device_id not in devices:
-            return JSONResponse({"error": "Dispositivo não encontrado"}, status_code=404)
+            return JSONResponse({"error": "Device not found"}, status_code=404)
 
         device = devices[device_id]
         current_time = time.time()
@@ -108,7 +138,7 @@ def register_routes(app, templates, websocket_manager):
                         "start": data.get("time", [None])[0],
                         "end": data.get("time", [None])[-1],
                         "duration": data.get("time", [None])[-1] - data.get("time", [None])[0]
-                                   if len(data.get("time", [])) > 0 else None
+                        if len(data.get("time", [])) > 0 else None
                     } if data.get("time") else None,
                     "data_stats": data_stats,
                     "sensor_start_time": getattr(sensor, 'start_time', None)
@@ -123,7 +153,7 @@ def register_routes(app, templates, websocket_manager):
                 }
 
             except Exception as e:
-                Logger.log_message(f"Erro ao processar sensor {sensor_type}: {e}")
+                Logger.log_message(f"Error processing sensor {sensor_type}: {e}")
                 sensor_info[sensor_type] = {
                     "type": sensor_type,
                     "has_data": False,
@@ -155,11 +185,20 @@ def register_routes(app, templates, websocket_manager):
 
     @app.get("/api/device/{device_id}/data/{sensor_type}")
     async def get_device_data(device_id: str, sensor_type: str):
-        """Rota API para obter dados de um sensor específico"""
+        """
+        API route to get data from specific sensor.
+
+        Args:
+            device_id (str): Device identifier
+            sensor_type (str): Sensor type
+
+        Returns:
+            dict: Sensor data with metadata
+        """
         devices = DeviceManager.get_all_devices()
 
         if device_id not in devices or sensor_type not in devices[device_id]["sensors"]:
-            return JSONResponse({"error": "Dispositivo ou sensor não encontrado"}, status_code=404)
+            return JSONResponse({"error": "Device or sensor not found"}, status_code=404)
 
         sensor = devices[device_id]["sensors"][sensor_type]
         data = sensor.get_data()
@@ -190,35 +229,47 @@ def register_routes(app, templates, websocket_manager):
 
     @app.websocket("/ws/device/{device_id}/sensor/{sensor_type}")
     async def websocket_endpoint(websocket: WebSocket, device_id: str, sensor_type: str):
-        Logger.log_message(f"CONEXÃO WEBSOCKET: {device_id}_{sensor_type}")
+        """
+        WebSocket endpoint for specific device sensor data.
+
+        Args:
+            websocket (WebSocket): WebSocket connection
+            device_id (str): Device identifier
+            sensor_type (str): Sensor type
+        """
+        Logger.log_message(f"WebSocket connection: {device_id}_{sensor_type}")
         await websocket_manager.connect(websocket, device_id, sensor_type)
 
         try:
             while True:
-                # Recebe mensagens do cliente (pode ser usado para heartbeat)
                 message = await websocket.receive_text()
-                Logger.log_message(f"websocket_endpoint:  MENSAGEM RECEBIDA: {message}")
+                Logger.log_message(f"WebSocket message received: {message}")
                 if message == "ping":
                     await websocket.send_text("pong")
         except WebSocketDisconnect:
-            Logger.log_message(f" WEBSOCKET DESCONECTADO: {device_id}_{sensor_type}")
+            Logger.log_message(f"WebSocket disconnected: {device_id}_{sensor_type}")
             websocket_manager.disconnect(websocket, device_id, sensor_type)
 
     @app.websocket("/ws/devices")
     async def device_list_websocket(websocket: WebSocket):
-        """WebSocket para atualizações da lista de dispositivos"""
-        Logger.log_message("CONEXÃO WEBSOCKET: lista de dispositivos")
+        """
+        WebSocket for device list updates.
+
+        Args:
+            websocket (WebSocket): WebSocket connection
+        """
+        Logger.log_message("WebSocket connection: device list")
         await websocket_manager.connect_device_list(websocket)
 
         try:
             while True:
                 message = await websocket.receive_text()
-                Logger.log_message(f"device_list_websocket: MENSAGEM RECEBIDA: {message}")
+                Logger.log_message(f"Device list WebSocket message received: {message}")
 
                 if message == "ping":
                     await websocket.send_text("pong")
                 elif message == "request_update":
-                    Logger.log_message(" liente solicitou atualização manual da lista")
+                    Logger.log_message("Client requested manual list update")
                     await websocket_manager.send_device_list_update(websocket)
                 elif message.startswith("{"):
                     try:
@@ -229,7 +280,7 @@ def register_routes(app, templates, websocket_manager):
                         pass
 
         except WebSocketDisconnect as web_socket_disconnect_err:
-            Logger.log_message(f"WebSocket da lista de dispositivos desconectado: {web_socket_disconnect_err}")
+            Logger.log_message(f"Device list WebSocket disconnected: {web_socket_disconnect_err}")
             websocket_manager.disconnect_device_list(websocket)
         except Exception as err:
-            Logger.log_message(f"Exceção ocorreu em device_list_websocket: {err}")
+            Logger.log_message(f"Exception occurred in device_list_websocket: {err}")
