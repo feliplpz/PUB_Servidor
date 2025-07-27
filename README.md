@@ -97,7 +97,7 @@ mkdir -p data
 
 1. **Start the server**
 ```bash
-python3 main.py
+python app.py
 ```
 
 2. **Access web interface**
@@ -291,7 +291,7 @@ mkdir -p data
 
 1. **Iniciar o servidor**
 ```bash
-python3 main.py
+python app.py
 ```
 
 2. **Acessar interface web**
