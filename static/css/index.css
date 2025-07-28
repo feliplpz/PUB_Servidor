@@ -1,9 +1,20 @@
+/* USP Colors */
+:root {
+    --usp-primary-blue: #1094AB;
+    --usp-secondary-blue: #64C4D2;
+    --usp-yellow: #FCB421;
+    --success-color: #4CAF50;
+    --warning-color: #FF9800;
+    --error-color: #f44336;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
     color: #fff;
     margin: 0;
     padding: 20px;
+    min-height: 100vh;
 }
 
 .container {
@@ -11,12 +22,65 @@ body {
     margin: 0 auto;
 }
 
-.title {
-    font-size: 24px;
-    margin-bottom: 20px;
-    text-align: center;
+/* Header Section */
+.header-section {
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
+.header-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--usp-primary-blue), var(--usp-secondary-blue), var(--usp-yellow));
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(16, 148, 171, 0.3);
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(16, 148, 171, 0.5);
+}
+
+.header-text .title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, var(--usp-secondary-blue), var(--usp-primary-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 8px 0;
+}
+
+.app-subtitle {
+    font-size: 1.1rem;
+    color: #bbbbbb;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* Status Section */
 .subtitle {
     font-size: 18px;
     margin: 30px 0 15px;
@@ -24,6 +88,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+    padding: 20px 24px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .controls {
@@ -34,27 +103,31 @@ body {
 
 .status {
     font-size: 14px;
-    padding: 5px 10px;
-    border-radius: 5px;
-    background-color: #333;
+    padding: 8px 16px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
 .status.connected {
-    background-color: #2d5a2d;
-    color: #90EE90;
+    background-color: rgba(76, 175, 80, 0.2);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .status.disconnected {
-    background-color: #5a2d2d;
-    color: #FFB6C1;
+    background-color: rgba(244, 67, 54, 0.2);
+    color: var(--error-color);
+    border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
 .status.reconnecting {
-    background-color: #5a4a2d;
-    color: #FFA500;
+    background-color: rgba(255, 152, 0, 0.2);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.3);
 }
 
 .status-indicator {
@@ -70,32 +143,102 @@ body {
     50% { opacity: 0.3; }
 }
 
+.auto-refresh-indicator {
+    background: var(--usp-yellow);
+    color: #121212;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-left: 12px;
+}
+
+.manual-refresh {
+    background: linear-gradient(135deg, var(--usp-primary-blue) 0%, var(--usp-secondary-blue) 100%);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(16, 148, 171, 0.3);
+}
+
+.manual-refresh:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.4);
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    color: #aaa;
+    padding: 40px;
+    display: none;
+    background: #1e1e1e;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+}
+
+/* Device List */
 .device-list {
     list-style: none;
     padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
 }
 
 .device-item {
-    background-color: #1e1e1e;
-    margin-bottom: 10px;
-    padding: 15px;
-    border-radius: 5px;
+    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+    margin-bottom: 0;
+    padding: 24px;
+    border-radius: 16px;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
+    align-items: stretch;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    min-height: 180px;
+}
+
+.device-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--usp-secondary-blue), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.device-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(100, 196, 210, 0.3);
+}
+
+.device-item:hover::before {
+    opacity: 1;
 }
 
 .device-item.new {
-    background-color: #2d4a2d;
-    border-left-color: #4CAF50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, #1e1e1e 100%);
+    border-color: var(--success-color);
     animation: slideIn 0.5s ease-in;
 }
 
 .device-item.removing {
-    background-color: #4a2d2d;
-    border-left-color: #f44336;
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, #1e1e1e 100%);
+    border-color: var(--error-color);
     animation: slideOut 0.3s ease-out forwards;
 }
 
@@ -103,12 +246,10 @@ body {
     from {
         opacity: 0;
         transform: translateX(-20px);
-        background-color: #4a4a2d;
     }
     to {
         opacity: 1;
         transform: translateX(0);
-        background-color: #2d4a2d;
     }
 }
 
@@ -116,8 +257,8 @@ body {
     from {
         opacity: 1;
         transform: translateX(0);
-        max-height: 70px;
-        margin-bottom: 10px;
+        max-height: 200px;
+        margin-bottom: 24px;
     }
     to {
         opacity: 0;
@@ -129,103 +270,180 @@ body {
     }
 }
 
+/* Device Item Content */
+.device-item > div:first-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .device-name {
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #ffffff;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.device-name::before {
+    content: '📱';
+    font-size: 1.5rem;
+    padding: 8px;
+    background: linear-gradient(135deg, var(--usp-primary-blue), var(--usp-secondary-blue));
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.3);
 }
 
 .device-id {
-    color: #aaa;
-    font-size: 0.9em;
+    color: #888;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 8px;
 }
 
 .device-time {
-    color: #888;
-    font-size: 0.8em;
+    color: #bbb;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
 }
 
 .sensor-info {
-    font-size: 12px;
-    color: #888;
-    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--usp-secondary-blue);
+    background: rgba(100, 196, 210, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(100, 196, 210, 0.2);
+    margin-top: 8px;
+    font-weight: 500;
 }
 
 .device-link {
-    background-color: #333;
+    background: linear-gradient(135deg, var(--usp-primary-blue) 0%, var(--usp-secondary-blue) 100%);
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 12px 20px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 8px;
     text-decoration: none;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 16px;
+    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.3);
 }
 
 .device-link:hover {
-    background-color: #555;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 148, 171, 0.4);
 }
 
+/* No Devices State */
 .no-devices {
     text-align: center;
     color: #888;
-    padding: 30px;
-    background-color: #1e1e1e;
-    border-radius: 5px;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+    border-radius: 16px;
     border: 2px dashed #333;
+    grid-column: 1 / -1;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .no-devices-icon {
-    font-size: 48px;
-    margin-bottom: 10px;
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
 }
 
 .no-devices-subtitle {
     font-size: 14px;
     margin-top: 10px;
     color: #666;
+    line-height: 1.5;
 }
 
-.loading {
-    text-align: center;
-    color: #aaa;
-    padding: 20px;
-    display: none;
-}
-
+/* Debug Info */
 .debug-info {
     position: fixed;
     bottom: 20px;
     right: 20px;
     background-color: #1e1e1e;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 16px;
+    border-radius: 8px;
     font-size: 12px;
     color: #aaa;
     max-width: 300px;
     opacity: 0.7;
     transition: opacity 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .debug-info:hover {
     opacity: 1;
 }
 
-.manual-refresh {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.3s ease;
-}
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
 
-.manual-refresh:hover {
-    background-color: #555;
-}
+    .header-section {
+        padding: 24px 20px;
+    }
 
-.auto-refresh-indicator {
-    font-size: 12px;
-    color: #666;
-    margin-left: 10px;
+    .logo-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .logo {
+        width: 64px;
+        height: 64px;
+    }
+
+    .header-text .title {
+        font-size: 1.8rem;
+    }
+
+    .app-subtitle {
+        font-size: 1rem;
+    }
+
+    .subtitle {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .controls {
+        justify-content: center;
+    }
+
+    .device-list {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .device-item {
+        padding: 20px;
+        min-height: 160px;
+    }
+
+    .debug-info {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin-top: 20px;
+        max-width: none;
+    }
 }
