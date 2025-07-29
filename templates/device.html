@@ -18,11 +18,10 @@
                 <div class="subtitle">Conectado em: {{ device.connected_at }}</div>
             </div>
 
-            <!-- Tela de Seleção -->
             <div id="selection-screen">
                 <div id="sensor-grid" class="sensor-grid">
                     {% if device.sensors %}
-                        <!-- Acelerômetro -->
+
                         {% if 'accelerometer' in device.sensors %}
                         <div class="sensor-card" id="card-accelerometer">
                             <h3>Acelerômetro</h3>
@@ -38,7 +37,6 @@
                         </div>
                         {% endif %}
 
-                        <!-- Giroscópio -->
                         {% if 'gyroscope' in device.sensors %}
                         <div class="sensor-card" id="card-gyroscope">
                             <h3>Giroscópio</h3>
@@ -54,7 +52,6 @@
                         </div>
                         {% endif %}
 
-                        <!-- Magnetômetro -->
                         {% if 'magnetometer' in device.sensors %}
                         <div class="sensor-card" id="card-magnetometer">
                             <h3>Magnetômetro</h3>
@@ -72,14 +69,12 @@
                     {% endif %}
                 </div>
 
-                <!-- Estado vazio -->
                 <div id="no-sensors-message" class="empty-state" style="display: none;">
                     <h3>Nenhum sensor ativo</h3>
                     <p>Ative pelo menos um sensor no aplicativo móvel para começar a visualizar os dados.</p>
                 </div>
             </div>
 
-            <!-- Tela de Gráfico -->
             <div id="graph-screen" class="graph-screen">
                 <div class="graph-header">
                     <div>
@@ -116,7 +111,6 @@
             }
         </script>
 
-        <!-- Inicialização -->
         <script>
             const deviceDataElement = document.getElementById("device-data");
             if (deviceDataElement) {

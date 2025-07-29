@@ -1,19 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
 :root {
     --usp-primary-blue: #1094AB;
     --usp-secondary-blue: #64C4D2;
     --usp-yellow: #FCB421;
+
     --white: #FFFFFF;
+    --black: #000000;
+
     --connected-color: #4CAF50;
     --disconnected-color: #F44336;
     --transmitting-color: #FF9800;
+
+    --status-background-color: #F5F5F5;
+    --status-border-color: #E0E0E0;
     --sensor-item-background: #FAFAFA;
     --sensor-item-border: #E8E8E8;
+
     --text-primary: #212121;
     --text-secondary: #757575;
+    --text-hint: #BDBDBD;
+
     --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     --elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
     --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
     --elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+
     --spacing-8: 8px;
     --spacing-12: 12px;
     --spacing-16: 16px;
@@ -32,379 +44,6 @@ body {
     font-family: 'Roboto', 'Segoe UI', sans-serif;
     background-color: var(--usp-yellow);
     color: var(--text-primary);
-    min-height: 100vh;
-    padding: var(--spacing-24);
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-16);
-}
-
-.card {
-    background-color: var(--white);
-    border-radius: var(--corner-radius);
-    box-shadow: var(--elevation-2);
-}
-
-.card-content {
-    padding: var(--spacing-20);
-}
-
-.card-title {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: var(--spacing-16);
-}
-
-.header-card {
-    text-align: center;
-    box-shadow: var(--elevation-4);
-}
-
-.logo {
-    width: 160px;
-    height: 160px;
-    margin-bottom: var(--spacing-8);
-}
-
-.app-title {
-    color: var(--usp-primary-blue);
-    font-size: 18px;
-    font-weight: bold;
-    margin: 0;
-}
-
-.server-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-16);
-}
-
-.server-header .card-title {
-    margin-bottom: 0;
-}
-
-.status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);;
-    gap: var(--spacing-12);
-    margin-bottom: var(--spacing-16);
-}
-
-.status-block {
-    background-color: var(--sensor-item-background);
-    border: 1px solid var(--sensor-item-border);
-    border-radius: var(--spacing-8);
-    padding: var(--spacing-16);
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.status-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    margin-bottom: var(--spacing-8);
-    width: 50%;
-}
-
-.status-number {
-    font-size: 32px;
-    font-weight: bold;
-    color: var(--usp-primary-blue);
-    width: 10%;
-}
-
-.status {
-    font-size: 14px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    justify-content: center;
-    width: 50%;
-}
-
-.status.connected {
-    color: var(--connected-color);
-}
-
-.status.disconnected {
-    color: var(--disconnected-color);
-}
-
-.status.reconnecting {
-    color: var(--transmitting-color);
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: currentColor;
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
-
-.manual-refresh {
-    background-color: var(--usp-secondary-blue);
-    color: var(--white);
-    border: none;
-    padding: var(--spacing-12) var(--spacing-20);
-    border-radius: var(--spacing-8);
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: var(--elevation-1);
-    transition: all 0.2s ease;
-}
-
-.manual-refresh:hover {
-    background-color: #4ba8bb;
-    transform: translateY(-1px);
-}
-
-.loading {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: var(--spacing-16);
-    display: none;
-    background-color: var(--sensor-item-background);
-    border-radius: var(--spacing-8);
-    font-size: 14px;
-}
-
-.device-list {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-16);
-}
-
-.device-item {
-    background-color: var(--sensor-item-background);
-    border: 1px solid var(--sensor-item-border);
-    border-radius: var(--spacing-8);
-    padding: var(--spacing-16);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-}
-
-.device-item:hover {
-    background-color: #f0f0f0;
-    box-shadow: var(--elevation-1);
-    transform: translateY(-1px);
-}
-
-.device-item.new {
-    background-color: rgba(76, 175, 80, 0.1);
-    border-color: var(--connected-color);
-    animation: slideIn 0.5s ease-out;
-}
-
-.device-item.removing {
-    animation: slideOut 0.3s ease-in forwards;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideOut {
-    to {
-        opacity: 0;
-        transform: translateX(-20px);
-        max-height: 0;
-        padding: 0;
-        margin: 0;
-    }
-}
-
-.device-name {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-
-.device-id {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-family: 'Courier New', monospace;
-    margin-bottom: 4px;
-}
-
-.device-time {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.device-link {
-    background-color: var(--usp-primary-blue);
-    color: var(--white);
-    text-decoration: none;
-    padding: var(--spacing-8) var(--spacing-16);
-    border-radius: var(--spacing-8);
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: var(--elevation-1);
-    transition: all 0.3s ease;
-}
-
-.device-link:hover {
-    background-color: #0d7a94;
-    color: var(--white);
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-.no-devices {
-    text-align: center;
-    padding: var(--spacing-24);
-    color: var(--text-secondary);
-    background-color: var(--sensor-item-background);
-    border: 2px dashed var(--sensor-item-border);
-    border-radius: var(--spacing-8);
-}
-
-.no-devices-icon {
-    font-size: 48px;
-    margin-bottom: var(--spacing-16);
-    opacity: 0.5;
-}
-
-.debug-info {
-    position: fixed;
-    bottom: var(--spacing-24);
-    right: var(--spacing-24);
-    background-color: var(--white);
-    padding: var(--spacing-16);
-    border-radius: var(--spacing-8);
-    font-size: 12px;
-    color: var(--text-secondary);
-    max-width: 300px;
-    box-shadow: var(--elevation-3);
-    border: 1px solid var(--sensor-item-border);
-    opacity: 0.9;
-}
-
-@media (max-width: 768px) {
-    body {
-        padding: var(--spacing-16);
-    }
-
-    .logo {
-        width: 120px;
-        height: 120px;
-    }
-
-    .app-title {
-        font-size: 16px;
-    }
-
-    .status-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-8);
-    }
-
-    .status-block {
-        min-height: 60px;
-        padding: var(--spacing-12);
-    }
-
-    .status-number {
-        font-size: 20px;
-    }
-
-    .device-item {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-        gap: var(--spacing-12);
-    }
-
-    .debug-info {
-        position: relative;
-        bottom: auto;
-        right: auto;
-        margin-top: var(--spacing-16);
-        max-width: none;
-    }
-}/* Android Material Design Colors (exact from colors.xml) */
-:root {
-    /* USP Colors */
-    --usp-primary-blue: #1094AB;
-    --usp-secondary-blue: #64C4D2;
-    --usp-yellow: #FCB421;
-
-    /* Basic Colors */
-    --white: #FFFFFF;
-    --black: #000000;
-
-    /* Status Colors */
-    --status-background-color: #F5F5F5;
-    --status-border-color: #E0E0E0;
-    --connected-color: #4CAF50;
-    --disconnected-color: #F44336;
-    --transmitting-color: #FF9800;
-
-    /* Item Colors */
-    --sensor-item-background: #FAFAFA;
-    --sensor-item-border: #E8E8E8;
-
-    /* Text Colors */
-    --text-primary: #212121;
-    --text-secondary: #757575;
-    --text-hint: #BDBDBD;
-
-    /* Material Design Elevations */
-    --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    --elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-    --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-    --elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-
-    /* Android DP conversion (1dp = 1px for web) */
-    --spacing-8: 8px;
-    --spacing-12: 12px;
-    --spacing-16: 16px;
-    --spacing-20: 20px;
-    --spacing-24: 24px;
-    --corner-radius: 12px;
-    --corner-radius-large: 16px;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--usp-yellow);
-    color: var(--text-primary);
     line-height: 1.5;
     min-height: 100vh;
     padding: var(--spacing-24);
@@ -418,12 +57,10 @@ body {
     gap: var(--spacing-16);
 }
 
-/* Material Design Card (exactly like Android CardView) */
 .card {
     background-color: var(--white);
     border-radius: var(--corner-radius);
     box-shadow: var(--elevation-2);
-    overflow: hidden;
     transition: box-shadow 0.3s ease;
 }
 
@@ -442,15 +79,9 @@ body {
     margin-bottom: var(--spacing-16);
 }
 
-/* Header Card (like Android header) */
 .header-card {
     text-align: center;
-    margin-bottom: var(--spacing-8);
     box-shadow: var(--elevation-4);
-}
-
-.header-card .card-content {
-    padding: var(--spacing-16);
 }
 
 .logo {
@@ -464,13 +95,7 @@ body {
     color: var(--usp-primary-blue);
     font-size: 18px;
     font-weight: bold;
-    text-align: center;
     margin: 0;
-}
-
-/* Server Card (Status + Controls Combined) */
-.server-card .card-content {
-    padding: var(--spacing-20);
 }
 
 .server-header {
@@ -524,13 +149,6 @@ body {
     line-height: 1;
 }
 
-.status-text {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-/* Status element (JS compatibility) */
 .status {
     font-size: 14px;
     font-weight: 500;
@@ -552,19 +170,8 @@ body {
     color: var(--transmitting-color);
 }
 
+.status-indicator,
 .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: currentColor;
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-#device-count {
-    color: var(--usp-primary-blue);
-}
-
-.status-indicator {
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -577,7 +184,10 @@ body {
     50% { opacity: 0.3; }
 }
 
-/* Material Button (like Android MaterialButton) */
+#device-count {
+    color: var(--usp-primary-blue);
+}
+
 .manual-refresh {
     background-color: var(--usp-secondary-blue);
     color: var(--white);
@@ -587,7 +197,6 @@ body {
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    text-transform: none;
     box-shadow: var(--elevation-1);
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -604,7 +213,6 @@ body {
     box-shadow: var(--elevation-1);
 }
 
-/* Loading */
 .loading {
     text-align: center;
     color: var(--text-secondary);
@@ -615,11 +223,6 @@ body {
     font-size: 14px;
 }
 
-/* Devices Card */
-.devices-card {
-    flex: 1;
-}
-
 .device-list {
     list-style: none;
     padding: 0;
@@ -628,12 +231,14 @@ body {
     gap: var(--spacing-16);
 }
 
-/* Device Item (like Android sensor item) */
 .device-item {
     background-color: var(--sensor-item-background);
     border: 1px solid var(--sensor-item-border);
     border-radius: var(--spacing-8);
     padding: var(--spacing-16);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     transition: all 0.3s ease;
 }
 
@@ -682,37 +287,17 @@ body {
     }
 }
 
-.device-item-content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-16);
-}
-
-.device-icon {
-    width: 24px;
-    height: 24px;
-    font-size: 24px;
-    color: var(--usp-primary-blue);
-    flex-shrink: 0;
-}
-
-.device-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
 .device-name {
     font-size: 16px;
     font-weight: bold;
-    color: var(--text-primary);
+    margin-bottom: 4px;
 }
 
 .device-id {
     font-size: 12px;
     color: var(--text-secondary);
     font-family: 'Courier New', monospace;
+    margin-bottom: 4px;
 }
 
 .device-time {
@@ -726,7 +311,6 @@ body {
     margin-top: 4px;
 }
 
-/* Material Button for device link */
 .device-link {
     background-color: var(--usp-primary-blue);
     color: var(--white);
@@ -748,7 +332,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* No Devices State */
 .no-devices {
     text-align: center;
     padding: var(--spacing-24);
@@ -771,7 +354,6 @@ body {
     line-height: 1.4;
 }
 
-/* Debug Info (like Android FAB) */
 .debug-info {
     position: fixed;
     bottom: var(--spacing-24);
@@ -793,7 +375,6 @@ body {
     box-shadow: var(--elevation-4);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     body {
         padding: var(--spacing-16);
@@ -812,7 +393,6 @@ body {
         font-size: 16px;
     }
 
-    /* Status grid stacks on mobile */
     .status-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-8);
@@ -820,26 +400,18 @@ body {
 
     .status-block {
         min-height: 60px;
-        padding: var(--spacing-8);
+        padding: var(--spacing-12);
     }
 
     .status-number {
-        font-size: 20px;
+        font-size: 24px;
     }
 
-    .controls-section {
-        margin-bottom: var(--spacing-12);
-    }
-
-    .device-item-content {
+    .device-item {
         flex-direction: column;
         align-items: stretch;
         text-align: center;
         gap: var(--spacing-12);
-    }
-
-    .device-info {
-        text-align: center;
     }
 
     .debug-info {
@@ -850,6 +422,3 @@ body {
         max-width: none;
     }
 }
-
-/* Material Design Typography */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
