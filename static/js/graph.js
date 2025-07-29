@@ -17,13 +17,31 @@ class SensorGraph {
 
         this.layout = {
             title: this.title,
-            xaxis: { title: 'Time (s)', showgrid: true, gridcolor: '#444' },
-            yaxis: { title: this.yAxisTitle, showgrid: true, gridcolor: '#444' },
+            xaxis: {
+                title: 'Time (s)',
+                showgrid: true,
+                gridcolor: '#e0e0e0',
+                gridwidth: 1
+            },
+            yaxis: {
+                title: this.yAxisTitle,
+                showgrid: true,
+                gridcolor: '#e0e0e0',
+                gridwidth: 1
+            },
             showlegend: true,
-            plot_bgcolor: "#121212",
-            paper_bgcolor: "#121212",
-            font: { color: 'white' },
-            legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.1 }
+            plot_bgcolor: "#FFFFFF",
+            paper_bgcolor: "#FFFFFF",
+            font: { color: 'black', size: 12 },
+            legend: {
+                orientation: 'h',
+                x: 0.5,
+                xanchor: 'center',
+                y: -0.1,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                bordercolor: '#ccc',
+                borderwidth: 1
+            }
         };
 
         this.plotlyData = [

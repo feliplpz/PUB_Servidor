@@ -19,21 +19,21 @@ const sensorConfigs = {
     accelerometer: {
         title: 'Accelerometer - Linear Acceleration',
         yAxisTitle: 'Acceleration (m/s²)',
-        colors: ['#1f77b4', '#ff7f0e', '#2ca02c'],
+        colors: ['#00ffff', '#ff0080', '#00ff00'],
         axisLabels: ['Acceleration X', 'Acceleration Y', 'Acceleration Z'],
         unit: '(m/s²)'
     },
     gyroscope: {
         title: 'Gyroscope - Angular Velocity',
         yAxisTitle: 'Angular Velocity (rad/s)',
-        colors: ['#d62728', '#9467bd', '#8c564b'],
+        colors: ['#ff1744', '#7c4dff', '#ff6d00'],
         axisLabels: ['Gyroscope X', 'Gyroscope Y', 'Gyroscope Z'],
         unit: '(rad/s)'
     },
     magnetometer: {
         title: 'Magnetometer - Magnetic Field',
         yAxisTitle: 'Magnetic Field (μT)',
-        colors: ['#ff6b6b', '#4ecdc4', '#45b7d1'],
+        colors: ['#e91e63', '#00e676', '#2979ff'],
         axisLabels: ['Magnetic X', 'Magnetic Y', 'Magnetic Z'],
         unit: '(μT)'
     }

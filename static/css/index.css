@@ -1,133 +1,567 @@
-/* USP Colors */
 :root {
     --usp-primary-blue: #1094AB;
     --usp-secondary-blue: #64C4D2;
     --usp-yellow: #FCB421;
-    --success-color: #4CAF50;
-    --warning-color: #FF9800;
-    --error-color: #f44336;
+    --white: #FFFFFF;
+    --connected-color: #4CAF50;
+    --disconnected-color: #F44336;
+    --transmitting-color: #FF9800;
+    --sensor-item-background: #FAFAFA;
+    --sensor-item-border: #E8E8E8;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    --spacing-8: 8px;
+    --spacing-12: 12px;
+    --spacing-16: 16px;
+    --spacing-20: 20px;
+    --spacing-24: 24px;
+    --corner-radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
-    color: #fff;
-    margin: 0;
-    padding: 20px;
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    background-color: var(--usp-yellow);
+    color: var(--text-primary);
     min-height: 100vh;
+    padding: var(--spacing-24);
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-}
-
-/* Header Section */
-.header-section {
-    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.header-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--usp-primary-blue), var(--usp-secondary-blue), var(--usp-yellow));
-}
-
-.logo-container {
     display: flex;
-    align-items: center;
-    gap: 24px;
+    flex-direction: column;
+    gap: var(--spacing-16);
+}
+
+.card {
+    background-color: var(--white);
+    border-radius: var(--corner-radius);
+    box-shadow: var(--elevation-2);
+}
+
+.card-content {
+    padding: var(--spacing-20);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: var(--spacing-16);
+}
+
+.header-card {
+    text-align: center;
+    box-shadow: var(--elevation-4);
 }
 
 .logo {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(16, 148, 171, 0.3);
-    transition: all 0.3s ease;
+    width: 160px;
+    height: 160px;
+    margin-bottom: var(--spacing-8);
 }
 
-.logo:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(16, 148, 171, 0.5);
-}
-
-.header-text .title {
-    font-size: 2.2rem;
-    font-weight: 700;
-    background: linear-gradient(45deg, var(--usp-secondary-blue), var(--usp-primary-blue));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 8px 0;
-}
-
-.app-subtitle {
-    font-size: 1.1rem;
-    color: #bbbbbb;
-    margin: 0;
-    font-weight: 400;
-}
-
-/* Status Section */
-.subtitle {
+.app-title {
+    color: var(--usp-primary-blue);
     font-size: 18px;
-    margin: 30px 0 15px;
-    color: #aaa;
+    font-weight: bold;
+    margin: 0;
+}
+
+.server-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
-    padding: 20px 24px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--spacing-16);
 }
 
-.controls {
+.server-header .card-title {
+    margin-bottom: 0;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);;
+    gap: var(--spacing-12);
+    margin-bottom: var(--spacing-16);
+}
+
+.status-block {
+    background-color: var(--sensor-item-background);
+    border: 1px solid var(--sensor-item-border);
+    border-radius: var(--spacing-8);
+    padding: var(--spacing-16);
+    min-height: 80px;
     display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
+}
+
+.status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-8);
+    width: 50%;
+}
+
+.status-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--usp-primary-blue);
+    width: 10%;
 }
 
 .status {
     font-size: 14px;
-    padding: 8px 16px;
-    border-radius: 20px;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    gap: 6px;
+    justify-content: center;
+    width: 50%;
 }
 
 .status.connected {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: var(--success-color);
-    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: var(--connected-color);
 }
 
 .status.disconnected {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: var(--error-color);
-    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: var(--disconnected-color);
 }
 
 .status.reconnecting {
-    background-color: rgba(255, 152, 0, 0.2);
-    color: var(--warning-color);
-    border: 1px solid rgba(255, 152, 0, 0.3);
+    color: var(--transmitting-color);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.manual-refresh {
+    background-color: var(--usp-secondary-blue);
+    color: var(--white);
+    border: none;
+    padding: var(--spacing-12) var(--spacing-20);
+    border-radius: var(--spacing-8);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: var(--elevation-1);
+    transition: all 0.2s ease;
+}
+
+.manual-refresh:hover {
+    background-color: #4ba8bb;
+    transform: translateY(-1px);
+}
+
+.loading {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--spacing-16);
+    display: none;
+    background-color: var(--sensor-item-background);
+    border-radius: var(--spacing-8);
+    font-size: 14px;
+}
+
+.device-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-16);
+}
+
+.device-item {
+    background-color: var(--sensor-item-background);
+    border: 1px solid var(--sensor-item-border);
+    border-radius: var(--spacing-8);
+    padding: var(--spacing-16);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.device-item:hover {
+    background-color: #f0f0f0;
+    box-shadow: var(--elevation-1);
+    transform: translateY(-1px);
+}
+
+.device-item.new {
+    background-color: rgba(76, 175, 80, 0.1);
+    border-color: var(--connected-color);
+    animation: slideIn 0.5s ease-out;
+}
+
+.device-item.removing {
+    animation: slideOut 0.3s ease-in forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    to {
+        opacity: 0;
+        transform: translateX(-20px);
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+    }
+}
+
+.device-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.device-id {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 4px;
+}
+
+.device-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.device-link {
+    background-color: var(--usp-primary-blue);
+    color: var(--white);
+    text-decoration: none;
+    padding: var(--spacing-8) var(--spacing-16);
+    border-radius: var(--spacing-8);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--elevation-1);
+    transition: all 0.3s ease;
+}
+
+.device-link:hover {
+    background-color: #0d7a94;
+    color: var(--white);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.no-devices {
+    text-align: center;
+    padding: var(--spacing-24);
+    color: var(--text-secondary);
+    background-color: var(--sensor-item-background);
+    border: 2px dashed var(--sensor-item-border);
+    border-radius: var(--spacing-8);
+}
+
+.no-devices-icon {
+    font-size: 48px;
+    margin-bottom: var(--spacing-16);
+    opacity: 0.5;
+}
+
+.debug-info {
+    position: fixed;
+    bottom: var(--spacing-24);
+    right: var(--spacing-24);
+    background-color: var(--white);
+    padding: var(--spacing-16);
+    border-radius: var(--spacing-8);
+    font-size: 12px;
+    color: var(--text-secondary);
+    max-width: 300px;
+    box-shadow: var(--elevation-3);
+    border: 1px solid var(--sensor-item-border);
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: var(--spacing-16);
+    }
+
+    .logo {
+        width: 120px;
+        height: 120px;
+    }
+
+    .app-title {
+        font-size: 16px;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-8);
+    }
+
+    .status-block {
+        min-height: 60px;
+        padding: var(--spacing-12);
+    }
+
+    .status-number {
+        font-size: 20px;
+    }
+
+    .device-item {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        gap: var(--spacing-12);
+    }
+
+    .debug-info {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin-top: var(--spacing-16);
+        max-width: none;
+    }
+}/* Android Material Design Colors (exact from colors.xml) */
+:root {
+    /* USP Colors */
+    --usp-primary-blue: #1094AB;
+    --usp-secondary-blue: #64C4D2;
+    --usp-yellow: #FCB421;
+
+    /* Basic Colors */
+    --white: #FFFFFF;
+    --black: #000000;
+
+    /* Status Colors */
+    --status-background-color: #F5F5F5;
+    --status-border-color: #E0E0E0;
+    --connected-color: #4CAF50;
+    --disconnected-color: #F44336;
+    --transmitting-color: #FF9800;
+
+    /* Item Colors */
+    --sensor-item-background: #FAFAFA;
+    --sensor-item-border: #E8E8E8;
+
+    /* Text Colors */
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --text-hint: #BDBDBD;
+
+    /* Material Design Elevations */
+    --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+
+    /* Android DP conversion (1dp = 1px for web) */
+    --spacing-8: 8px;
+    --spacing-12: 12px;
+    --spacing-16: 16px;
+    --spacing-20: 20px;
+    --spacing-24: 24px;
+    --corner-radius: 12px;
+    --corner-radius-large: 16px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--usp-yellow);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: var(--spacing-24);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-16);
+}
+
+/* Material Design Card (exactly like Android CardView) */
+.card {
+    background-color: var(--white);
+    border-radius: var(--corner-radius);
+    box-shadow: var(--elevation-2);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--elevation-3);
+}
+
+.card-content {
+    padding: var(--spacing-20);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-16);
+}
+
+/* Header Card (like Android header) */
+.header-card {
+    text-align: center;
+    margin-bottom: var(--spacing-8);
+    box-shadow: var(--elevation-4);
+}
+
+.header-card .card-content {
+    padding: var(--spacing-16);
+}
+
+.logo {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    margin-bottom: var(--spacing-8);
+}
+
+.app-title {
+    color: var(--usp-primary-blue);
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+}
+
+/* Server Card (Status + Controls Combined) */
+.server-card .card-content {
+    padding: var(--spacing-20);
+}
+
+.server-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-16);
+}
+
+.server-header .card-title {
+    margin-bottom: 0;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-12);
+    margin-bottom: var(--spacing-16);
+}
+
+.status-block {
+    background-color: var(--sensor-item-background);
+    border: 1px solid var(--sensor-item-border);
+    border-radius: var(--spacing-8);
+    padding: var(--spacing-16);
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.status-block:hover {
+    transform: translateY(-1px);
+}
+
+.status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: var(--spacing-8);
+}
+
+.status-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--usp-primary-blue);
+    line-height: 1;
+}
+
+.status-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Status element (JS compatibility) */
+.status {
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+}
+
+.status.connected {
+    color: var(--connected-color);
+}
+
+.status.disconnected {
+    color: var(--disconnected-color);
+}
+
+.status.reconnecting {
+    color: var(--transmitting-color);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+#device-count {
+    color: var(--usp-primary-blue);
 }
 
 .status-indicator {
@@ -143,103 +577,82 @@ body {
     50% { opacity: 0.3; }
 }
 
-.auto-refresh-indicator {
-    background: var(--usp-yellow);
-    color: #121212;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-left: 12px;
-}
-
+/* Material Button (like Android MaterialButton) */
 .manual-refresh {
-    background: linear-gradient(135deg, var(--usp-primary-blue) 0%, var(--usp-secondary-blue) 100%);
-    color: white;
+    background-color: var(--usp-secondary-blue);
+    color: var(--white);
     border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: var(--spacing-12) var(--spacing-20);
+    border-radius: var(--spacing-8);
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(16, 148, 171, 0.3);
+    font-weight: 600;
+    text-transform: none;
+    box-shadow: var(--elevation-1);
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .manual-refresh:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.4);
+    background-color: #4ba8bb;
+    box-shadow: var(--elevation-2);
+    transform: translateY(-1px);
+}
+
+.manual-refresh:active {
+    transform: translateY(0);
+    box-shadow: var(--elevation-1);
 }
 
 /* Loading */
 .loading {
     text-align: center;
-    color: #aaa;
-    padding: 40px;
+    color: var(--text-secondary);
+    padding: var(--spacing-16);
     display: none;
-    background: #1e1e1e;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
+    background-color: var(--status-background-color);
+    border-radius: var(--spacing-8);
+    font-size: 14px;
 }
 
-/* Device List */
+/* Devices Card */
+.devices-card {
+    flex: 1;
+}
+
 .device-list {
     list-style: none;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 24px;
-}
-
-.device-item {
-    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
-    margin-bottom: 0;
-    padding: 24px;
-    border-radius: 16px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    align-items: stretch;
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    min-height: 180px;
+    gap: var(--spacing-16);
 }
 
-.device-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--usp-secondary-blue), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+/* Device Item (like Android sensor item) */
+.device-item {
+    background-color: var(--sensor-item-background);
+    border: 1px solid var(--sensor-item-border);
+    border-radius: var(--spacing-8);
+    padding: var(--spacing-16);
+    transition: all 0.3s ease;
 }
 
 .device-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    border-color: rgba(100, 196, 210, 0.3);
-}
-
-.device-item:hover::before {
-    opacity: 1;
+    background-color: #f0f0f0;
+    box-shadow: var(--elevation-1);
+    transform: translateY(-1px);
 }
 
 .device-item.new {
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, #1e1e1e 100%);
-    border-color: var(--success-color);
-    animation: slideIn 0.5s ease-in;
+    background-color: rgba(76, 175, 80, 0.1);
+    border-color: var(--connected-color);
+    animation: slideIn 0.5s ease-out;
 }
 
 .device-item.removing {
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, #1e1e1e 100%);
-    border-color: var(--error-color);
-    animation: slideOut 0.3s ease-out forwards;
+    background-color: rgba(244, 67, 54, 0.1);
+    border-color: var(--disconnected-color);
+    animation: slideOut 0.3s ease-in forwards;
 }
 
 @keyframes slideIn {
@@ -258,192 +671,185 @@ body {
         opacity: 1;
         transform: translateX(0);
         max-height: 200px;
-        margin-bottom: 24px;
+        margin-bottom: var(--spacing-16);
     }
     to {
         opacity: 0;
         transform: translateX(-20px);
         max-height: 0;
         margin-bottom: 0;
-        padding-top: 0;
-        padding-bottom: 0;
+        padding: 0;
     }
 }
 
-/* Device Item Content */
-.device-item > div:first-child {
+.device-item-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-16);
+}
+
+.device-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    color: var(--usp-primary-blue);
+    flex-shrink: 0;
+}
+
+.device-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .device-name {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: #ffffff;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.device-name::before {
-    content: '📱';
-    font-size: 1.5rem;
-    padding: 8px;
-    background: linear-gradient(135deg, var(--usp-primary-blue), var(--usp-secondary-blue));
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.3);
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary);
 }
 
 .device-id {
-    color: #888;
-    font-size: 0.9rem;
+    font-size: 12px;
+    color: var(--text-secondary);
     font-family: 'Courier New', monospace;
-    margin-bottom: 8px;
 }
 
 .device-time {
-    color: #bbb;
-    font-size: 0.9rem;
-    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 .sensor-info {
-    font-size: 0.85rem;
-    color: var(--usp-secondary-blue);
-    background: rgba(100, 196, 210, 0.1);
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(100, 196, 210, 0.2);
-    margin-top: 8px;
-    font-weight: 500;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
 }
 
+/* Material Button for device link */
 .device-link {
-    background: linear-gradient(135deg, var(--usp-primary-blue) 0%, var(--usp-secondary-blue) 100%);
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    cursor: pointer;
-    border-radius: 8px;
+    background-color: var(--usp-primary-blue);
+    color: var(--white);
     text-decoration: none;
+    padding: var(--spacing-8) var(--spacing-16);
+    border-radius: var(--spacing-8);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--elevation-1);
     transition: all 0.3s ease;
-    font-weight: 600;
-    text-align: center;
-    margin-top: 16px;
-    box-shadow: 0 4px 12px rgba(16, 148, 171, 0.3);
+    white-space: nowrap;
 }
 
 .device-link:hover {
-    color: white;
+    background-color: #0d7a94;
+    color: var(--white);
     text-decoration: none;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 148, 171, 0.4);
+    box-shadow: var(--elevation-2);
+    transform: translateY(-1px);
 }
 
 /* No Devices State */
 .no-devices {
     text-align: center;
-    color: #888;
-    padding: 60px 40px;
-    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
-    border-radius: 16px;
-    border: 2px dashed #333;
-    grid-column: 1 / -1;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    padding: var(--spacing-24);
+    color: var(--text-secondary);
+    background-color: var(--sensor-item-background);
+    border: 2px dashed var(--sensor-item-border);
+    border-radius: var(--spacing-8);
 }
 
 .no-devices-icon {
-    font-size: 4rem;
-    margin-bottom: 16px;
+    font-size: 48px;
+    margin-bottom: var(--spacing-16);
     opacity: 0.5;
 }
 
 .no-devices-subtitle {
     font-size: 14px;
-    margin-top: 10px;
-    color: #666;
-    line-height: 1.5;
+    margin-top: var(--spacing-8);
+    color: var(--text-hint);
+    line-height: 1.4;
 }
 
-/* Debug Info */
+/* Debug Info (like Android FAB) */
 .debug-info {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #1e1e1e;
-    padding: 16px;
-    border-radius: 8px;
+    bottom: var(--spacing-24);
+    right: var(--spacing-24);
+    background-color: var(--white);
+    padding: var(--spacing-16);
+    border-radius: var(--spacing-8);
     font-size: 12px;
-    color: #aaa;
+    color: var(--text-secondary);
     max-width: 300px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--elevation-3);
+    border: 1px solid var(--sensor-item-border);
+    opacity: 0.9;
+    transition: all 0.3s ease;
 }
 
 .debug-info:hover {
     opacity: 1;
+    box-shadow: var(--elevation-4);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    body {
+        padding: var(--spacing-16);
+    }
+
     .container {
-        padding: 16px;
-    }
-
-    .header-section {
-        padding: 24px 20px;
-    }
-
-    .logo-container {
-        flex-direction: column;
-        text-align: center;
-        gap: 16px;
+        gap: var(--spacing-16);
     }
 
     .logo {
-        width: 64px;
-        height: 64px;
+        width: 120px;
+        height: 120px;
     }
 
-    .header-text .title {
-        font-size: 1.8rem;
+    .app-title {
+        font-size: 16px;
     }
 
-    .app-subtitle {
-        font-size: 1rem;
+    /* Status grid stacks on mobile */
+    .status-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-8);
     }
 
-    .subtitle {
+    .status-block {
+        min-height: 60px;
+        padding: var(--spacing-8);
+    }
+
+    .status-number {
+        font-size: 20px;
+    }
+
+    .controls-section {
+        margin-bottom: var(--spacing-12);
+    }
+
+    .device-item-content {
         flex-direction: column;
-        gap: 16px;
         align-items: stretch;
         text-align: center;
+        gap: var(--spacing-12);
     }
 
-    .controls {
-        justify-content: center;
-    }
-
-    .device-list {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .device-item {
-        padding: 20px;
-        min-height: 160px;
+    .device-info {
+        text-align: center;
     }
 
     .debug-info {
         position: relative;
         bottom: auto;
         right: auto;
-        margin-top: 20px;
+        margin-top: var(--spacing-16);
         max-width: none;
     }
 }
+
+/* Material Design Typography */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');

@@ -8,61 +8,68 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header with logo -->
-        <div class="header-section">
-            <div class="logo-container">
+        <div class="card header-card">
+            <div class="card-content">
                 <img src="/static/images/pocket_experimental_physics.png" alt="Logo" class="logo">
-                <div class="header-text">
-                    <h1 class="title">Pocket Experimental Physics</h1>
-                    <p class="app-subtitle">Servidor de Sensores Bluetooth</p>
+                <h1 class="app-title">Pocket Experimental Physics</h1>
+            </div>
+        </div>
+
+        <div class="card server-card">
+            <div class="card-content">
+                <div class="server-header">
+                    <h2 class="card-title">Status do Servidor</h2>
+                    <button class="manual-refresh" id="manual-refresh-btn">
+                        🔄 Atualizar Lista
+                    </button>
                 </div>
-            </div>
-        </div>
 
-        <!-- Original structure - exactly as before -->
-        <div class="subtitle">
-            <span>
-                Dispositivos Conectados
-                <span id="device-count" class="auto-refresh-indicator">(0)</span>
-            </span>
-            <div class="controls">
-                <button class="manual-refresh" id="manual-refresh-btn">🔄 Atualizar</button>
-                <span class="status disconnected" id="connectionStatus">
-                    <span class="status-indicator"></span>
-                    Conectando...
-                </span>
-            </div>
-        </div>
-
-        <div class="loading" id="loading">Conectando ao servidor...</div>
-
-        <ul class="device-list" id="deviceList">
-            {% if devices %}
-                {% for device_id, device in devices.items() %}
-                <li class="device-item" data-device-id="{{ device_id }}">
-                    <div>
-                        <div class="device-name">{{ device.name }}</div>
-                        <div class="device-id">ID: {{ device_id }}</div>
-                        <div class="device-time">Conectado em: {{ device.connected_at }}</div>
-                        {% if device.sensor_count > 0 %}
-                        <div class="sensor-info">
-                            📊 {{ device.active_sensor_count }}/{{ device.sensor_count }} sensores ativos
+                <div class="status-grid">
+                    <div class="status-block">
+                        <div class="status-label">Conexão</div>
+                        <div class="status disconnected" id="connectionStatus">
+                            <span class="status-dot"></span>
+                            Conectando...
                         </div>
-                        {% endif %}
                     </div>
-                    <a href="/device/{{ device_id }}" class="device-link">Ver detalhes</a>
-                </li>
-                {% endfor %}
-            {% else %}
-                <div class="no-devices" id="noDevices">
-                    <div class="no-devices-icon">📱</div>
-                    <div>Nenhum dispositivo conectado.</div>
-                    <div class="no-devices-subtitle">
-                        Conecte um dispositivo móvel via Bluetooth para começar.
+
+                    <div class="status-block">
+                        <div class="status-label">Dispositivos</div>
+                        <div class="status-number">
+                            <span id="device-count">0</span>
+                        </div>
                     </div>
                 </div>
-            {% endif %}
-        </ul>
+
+                <div class="loading" id="loading">Conectando ao servidor...</div>
+            </div>
+        </div>
+
+        <div class="card devices-card">
+            <div class="card-content">
+                <h2 class="card-title">Dispositivos Disponíveis</h2>
+
+                <ul class="device-list" id="deviceList">
+                    {% if devices %}
+                        {% for device_id, device in devices.items() %}
+                        <li class="device-item" data-device-id="{{ device_id }}">
+                            <div>
+                                <div class="device-name">{{ device.name }}</div>
+                                <div class="device-id">ID: {{ device_id }}</div>
+                                <div class="device-time">{{ device.connected_at }}</div>
+                            </div>
+                            <a href="/device/{{ device_id }}" class="device-link">Ver detalhes</a>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-devices" id="noDevices">
+                            <div class="no-devices-icon">📱</div>
+                            <div>Nenhum dispositivo conectado</div>
+                        </div>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div class="debug-info" id="debugInfo">
